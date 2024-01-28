@@ -1,0 +1,14 @@
+#gameContainer {
+  width: 800px;
+  height: 600px;
+  border: 2px solid black;
+  position: relative;
+  overflow: hidden;
+}
+
+#gameContainer img {
+  position: absolute;
+  left: 100px;
+  top: 100px;
+  transform: rotate(45deg);
+}
