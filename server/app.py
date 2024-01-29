@@ -4,63 +4,37 @@ import asyncio
 import json
 import os
 import signal
+from time import time
 
 from websockets.server import WebSocketServerProtocol, serve
 
-from server.constants import Player
-from server.game import play_one_game
-from server.notify import broadcast_game_over
 
-
-# For now we support at most one game at a time.
-# this tracks the websocket of each connected player
-# until both players are connected and we can start the game.
-WEBSOCKETS: dict[Player, WebSocketServerProtocol] = {}
+WIDTH = 800
+HEIGHT = 600
+FPS = 60
 
 
 async def handler(websocket: WebSocketServerProtocol) -> None:
-    """
-    Register player => websocket in a global registry.
-    If we are the 2nd connecting player, start the game.
-    Otherwise, wait forever for another player.
-
-    Consumes a single message from the websocket queue containing the Player
-    (north or south).  Future messages are handled inside the game task.
-    """
     assert isinstance(websocket, WebSocketServerProtocol)
-    message = await websocket.recv()
-    event = json.loads(message)
-    assert event["type"] == "join"
 
-    player = Player(event["player"])
-    WEBSOCKETS[player] = websocket
-    print(f"{player} connected")
+    x = 0
+    y = 0
+    degree = 0
 
-    try:
-        if len(WEBSOCKETS) == 2 and all(w.open for w in WEBSOCKETS.values()):
-            # both players are connected, so start the match.
-            print("New match.")
-            match_score = {Player.N: 0, Player.S: 0}
-            while True:
-                game_score = await play_one_game(match_score.copy(), WEBSOCKETS)
-                for player, points in game_score.items():
-                    match_score[player] += points
+    last_frame = time()
 
-                # let the player's board redraw before sending the game over alert
-                await asyncio.sleep(0.5)
+    while True:
+        x = (x + 1) % WIDTH
+        y = (y + 1) % HEIGHT
+        degree = (degree + 1) % 360
+        position = {"x": x, "y": y, "degree": degree}
+        message = json.dumps(position)
 
-                await broadcast_game_over(WEBSOCKETS, game_score)
-        else:
-            # wait forever for the other player to connect
-            await websocket.wait_closed()
-    finally:
-        # whichever handler gets here closes both connections
-        # both players will need to refresh to play a new game
-        #
-        # TODO: think the synchronization here through more carefully
-        # and also what behavior you'd like if someone loses connection
-        for websocket in WEBSOCKETS.values():
-            await websocket.close()
+        # sleep until it's time to send the frame
+        next_frame = last_frame + 1 / FPS
+        await asyncio.sleep(next_frame - time())
+        last_frame = next_frame
+        await websocket.send(message)
 
 
 async def main() -> None:
