@@ -14,8 +14,7 @@ function setPosition(characterId, x, y, degree) {
 }
 
 function receivePosition(websocket) {
-  // update the UI with changes to the current (partially) selected moves.
-  // the server should call this again with null selections to clear the highlights.
+  // set the position & rotation of torso1
   websocket.addEventListener("message", ({ data }) => {
     const event = JSON.parse(data);
 
@@ -27,8 +26,24 @@ function receivePosition(websocket) {
   });
 }
 
+function sendKeyDowns(websocket) {
+  // pass keydowns directly to python
+  document.addEventListener('keydown', (event) => {
+    const key = event.key;
+    console.log(`Key down: ${key}`);
+
+    websocket.send(
+      JSON.stringify({
+        keydown: key,
+      })
+    );
+  });
+}
+
+
 window.addEventListener("DOMContentLoaded", () => {
   const websocket = new WebSocket(getWebSocketServer());
 
   receivePosition(websocket);
+  sendKeyDowns(websocket);
 });
