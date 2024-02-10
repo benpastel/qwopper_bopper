@@ -26,15 +26,21 @@ function receivePosition(websocket) {
   });
 }
 
-function sendKeyDowns(websocket) {
-  // pass keydowns directly to python
+function sendKeyEvents(websocket) {
+  // send key up & down events directly to python
   document.addEventListener('keydown', (event) => {
     const key = event.key;
-    console.log(`Key down: ${key}`);
-
     websocket.send(
       JSON.stringify({
         keydown: key,
+      })
+    );
+  });
+  document.addEventListener('keyup', (event) => {
+    const key = event.key;
+    websocket.send(
+      JSON.stringify({
+        keyup: key,
       })
     );
   });
@@ -45,5 +51,5 @@ window.addEventListener("DOMContentLoaded", () => {
   const websocket = new WebSocket(getWebSocketServer());
 
   receivePosition(websocket);
-  sendKeyDowns(websocket);
+  sendKeyEvents(websocket);
 });
