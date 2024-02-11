@@ -6,21 +6,16 @@ import os
 import signal
 from time import time
 
+import pymunk  # type: ignore
 from websockets.server import WebSocketServerProtocol, serve
 
 
 WIDTH = 800
 HEIGHT = 600
 FPS = 60
+IMPULSE = 1000
+GRAVITY = 500
 
-VELOCITY = (0, 0)
-MAX_VELOCITY = 20
-
-# TODO: allow holding up & left simultaneously
-# if you depress them, they should effect this frame but not next frame
-# if you press a different key, that should replace previous single key presses?
-#   ... or maybe not, all key presses accumulate until the frame?
-#   ... well right should replace left, but should stack with up/down
 LAST_KEYDOWN: None | str = None
 
 
@@ -35,33 +30,28 @@ async def listen_for_keydown(websocket: WebSocketServerProtocol) -> None:
             LAST_KEYDOWN = event["keydown"]
 
 
-def update_velocity() -> tuple[int, int]:
+def apply_force_from_keypress(body: pymunk.Body) -> None:
     """
     Read the last keydown & reset it to None
-    increase or decrease momentum up to a max
-    set & return the new velocity
+    use it to apply a force to the body
     """
 
     # read & reset the last keydown
     global LAST_KEYDOWN
-    global VELOCITY
     keydown = LAST_KEYDOWN
     LAST_KEYDOWN = None
 
-    # update velocity
-    dx, dy = VELOCITY
+    impulse = (0, 0)
     if keydown == "ArrowLeft":
-        dx -= 1
+        impulse = (-IMPULSE, 0)
     elif keydown == "ArrowRight":
-        dx += 1
+        impulse = (IMPULSE, 0)
     elif keydown == "ArrowUp":
-        dy -= 1
+        impulse = (0, -IMPULSE)
     elif keydown == "ArrowDown":
-        dy += 1
-    dx = min(MAX_VELOCITY, max(-MAX_VELOCITY, dx))
-    dy = min(MAX_VELOCITY, max(-MAX_VELOCITY, dy))
-    VELOCITY = dx, dy
-    return dx, dy
+        impulse = (0, IMPULSE)
+
+    body.apply_impulse_at_local_point(impulse)
 
 
 async def handler(websocket: WebSocketServerProtocol) -> None:
@@ -78,33 +68,53 @@ async def handler(websocket: WebSocketServerProtocol) -> None:
 
     task.add_done_callback(task_exception_handler)
 
-    x = 0
-    y = 0
+    space = pymunk.Space()
+    space.gravity = 0, GRAVITY
+    torso = pymunk.Body()
+    torso.position = 500, 500
+
+    poly = pymunk.Poly.create_box(torso, size=(164, 254))
+    poly.mass = 10
+    poly.group = 0
+    poly.elasticity = 0.9
+
+    # walls
+    static: list[pymunk.Shape] = [
+        pymunk.Segment(space.static_body, (0, HEIGHT), (0, 0), 5),
+        pymunk.Segment(space.static_body, (0, 0), (WIDTH, 0), 5),
+        pymunk.Segment(space.static_body, (WIDTH, 0), (WIDTH, HEIGHT), 5),
+        pymunk.Segment(space.static_body, (0, HEIGHT), (WIDTH, HEIGHT), 5),
+    ]
+    for s in static:
+        s.friction = 0.5
+        s.group = 1
+        s.elasticity = 0.9
+
+    space.add(torso, poly, *static)
+    space.add_default_collision_handler()
+
     degree = 0
 
     last_frame = time()
+    while True:
+        # sleep until it's time to for the next frame
+        next_frame = last_frame + 1 / FPS
+        await asyncio.sleep(next_frame - time())
+        last_frame = next_frame
 
-    try:
-        while True:
-            # sleep until it's time to for the next frame
-            next_frame = last_frame + 1 / FPS
-            await asyncio.sleep(next_frame - time())
-            last_frame = next_frame
+        apply_force_from_keypress(torso)
 
-            # set the new position based on last keypress arrow keys
-            dx, dy = update_velocity()
-            x = (x + dx) % WIDTH
-            y = (y + dy) % HEIGHT
+        # step the position
+        space.step(1.0 / FPS)
 
-            degree = (degree + 1) % 360
-            position = {"x": x, "y": y, "degree": degree}
-            message = json.dumps(position)
+        # read the new position
+        x, y = torso.position
 
-            await websocket.send(message)
-    except Exception as e:
-        print(f"{e=}")
-    finally:
-        task.cancel()
+        degree = (degree + 1) % 360
+        position = {"x": x, "y": y, "degree": degree}
+        message = json.dumps(position)
+
+        await websocket.send(message)
 
 
 async def main() -> None:
