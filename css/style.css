@@ -10,5 +10,5 @@
   position: absolute;
   left: 100px;
   top: 100px;
-  transform: rotate(45deg);
+  transform: rotate(0rad);
 }

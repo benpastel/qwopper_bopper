@@ -6,11 +6,11 @@ function getWebSocketServer() {
   }
 }
 
-function setPosition(characterId, x, y, degree) {
+function setPosition(characterId, x, y, angleRadians) {
   var character = document.getElementById(characterId);
   character.style.left = x + 'px';
   character.style.top = y + 'px';
-  character.style.transform = 'rotate(' + degree + 'deg)';
+  character.style.transform = 'rotate(' + angleRadians + 'rad)';
 }
 
 function receivePosition(websocket) {
@@ -20,9 +20,9 @@ function receivePosition(websocket) {
 
     const x = event["x"];
     const y = event["y"];
-    const degree = event["degree"];
+    const angleRadians = event["angle"];
 
-    setPosition("torso1", x, y, degree);
+    setPosition("torso1", x, y, angleRadians);
   });
 }
 

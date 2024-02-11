@@ -70,11 +70,11 @@ async def handler(websocket: WebSocketServerProtocol) -> None:
 
     space = pymunk.Space()
     space.gravity = 0, GRAVITY
-    torso = pymunk.Body()
+    torso = pymunk.Body(mass=10, moment=1000)
     torso.position = 500, 500
+    torso.angle = 0
 
     poly = pymunk.Poly.create_box(torso, size=(164, 254))
-    poly.mass = 10
     poly.group = 0
     poly.elasticity = 0.9
 
@@ -93,8 +93,6 @@ async def handler(websocket: WebSocketServerProtocol) -> None:
     space.add(torso, poly, *static)
     space.add_default_collision_handler()
 
-    degree = 0
-
     last_frame = time()
     while True:
         # sleep until it's time to for the next frame
@@ -109,9 +107,9 @@ async def handler(websocket: WebSocketServerProtocol) -> None:
 
         # read the new position
         x, y = torso.position
+        angle = torso.angle
 
-        degree = (degree + 1) % 360
-        position = {"x": x, "y": y, "degree": degree}
+        position = {"x": x, "y": y, "angle": angle}
         message = json.dumps(position)
 
         await websocket.send(message)
