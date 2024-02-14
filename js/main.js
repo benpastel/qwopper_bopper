@@ -10,7 +10,7 @@ function setPosition(characterId, x, y, angleRadians) {
   var character = document.getElementById(characterId);
   character.style.left = x + 'px';
   character.style.top = y + 'px';
-  character.style.transform = 'rotate(' + angleRadians + 'rad)';
+  character.style.transform = 'translate(-50%, -50%) rotate(' + angleRadians + 'rad)';
 }
 
 function receivePosition(websocket) {

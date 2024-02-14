@@ -15,6 +15,7 @@ HEIGHT = 600
 FPS = 60
 IMPULSE = 1000
 GRAVITY = 500
+STEPS_PER_FRAME = 10
 
 LAST_KEYDOWN: None | str = None
 
@@ -80,10 +81,14 @@ async def handler(websocket: WebSocketServerProtocol) -> None:
 
     # walls
     static: list[pymunk.Shape] = [
-        pymunk.Segment(space.static_body, (0, HEIGHT), (0, 0), 5),
-        pymunk.Segment(space.static_body, (0, 0), (WIDTH, 0), 5),
-        pymunk.Segment(space.static_body, (WIDTH, 0), (WIDTH, HEIGHT), 5),
-        pymunk.Segment(space.static_body, (0, HEIGHT), (WIDTH, HEIGHT), 5),
+        pymunk.Segment(space.static_body, (-10, -10), (-10, HEIGHT + 10), 10),
+        pymunk.Segment(space.static_body, (-10, -10), (WIDTH + 10, -10), 10),
+        pymunk.Segment(
+            space.static_body, (WIDTH + 10, -10), (WIDTH + 10, HEIGHT + 10), 10
+        ),
+        pymunk.Segment(
+            space.static_body, (-10, HEIGHT + 10), (WIDTH + 10, HEIGHT + 10), 10
+        ),
     ]
     for s in static:
         s.friction = 0.5
@@ -103,7 +108,8 @@ async def handler(websocket: WebSocketServerProtocol) -> None:
         apply_force_from_keypress(torso)
 
         # step the position
-        space.step(1.0 / FPS)
+        for _ in range(STEPS_PER_FRAME):
+            space.step(1.0 / (FPS * STEPS_PER_FRAME))
 
         # read the new position
         x, y = torso.position
