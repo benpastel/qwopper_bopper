@@ -23,9 +23,9 @@ function receivePosition(websocket) {
     const torso_angle = event["torso"]["angle"];
     setPosition("torso", torso_x, torso_y, torso_angle);
 
-    const leg_x = event["torso"]["x"];
-    const leg_y = event["torso"]["y"];
-    const leg_angle = event["torso"]["angle"];
+    const leg_x = event["leg"]["x"];
+    const leg_y = event["leg"]["y"];
+    const leg_angle = event["leg"]["angle"];
     setPosition("leg", leg_x, leg_y, leg_angle);
   });
 }
