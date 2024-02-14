@@ -77,7 +77,7 @@ async def handler(websocket: WebSocketServerProtocol) -> None:
 
     poly = pymunk.Poly.create_box(torso, size=(164, 254))
     poly.group = 0
-    poly.elasticity = 0.9
+    poly.elasticity = 0.5
 
     # walls
     static: list[pymunk.Shape] = [
@@ -93,7 +93,7 @@ async def handler(websocket: WebSocketServerProtocol) -> None:
     for s in static:
         s.friction = 0.5
         s.group = 1
-        s.elasticity = 0.9
+        s.elasticity = 0.5
 
     space.add(torso, poly, *static)
     space.add_default_collision_handler()
