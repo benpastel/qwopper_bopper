@@ -16,6 +16,8 @@ FPS = 60
 IMPULSE = 1000
 GRAVITY = 500
 STEPS_PER_FRAME = 10
+TORSO_SIZE = (164, 254)
+LEG_SIZE = (60, 275)
 
 LAST_KEYDOWN: None | str = None
 
@@ -72,12 +74,20 @@ async def handler(websocket: WebSocketServerProtocol) -> None:
     space = pymunk.Space()
     space.gravity = 0, GRAVITY
     torso = pymunk.Body(mass=10, moment=1000)
-    torso.position = 500, 500
+    torso.position = 400, 400
     torso.angle = 0
 
-    poly = pymunk.Poly.create_box(torso, size=(164, 254))
-    poly.group = 0
-    poly.elasticity = 0.5
+    leg = pymunk.Body(mass=10, moment=500)
+    leg.position = 100, 100
+    leg.angle = 0
+
+    torso_box = pymunk.Poly.create_box(torso, size=TORSO_SIZE)
+    torso_box.group = 0
+    torso_box.elasticity = 0.5
+
+    leg_box = pymunk.Poly.create_box(leg, size=LEG_SIZE)
+    leg_box.group = 1
+    leg_box.elasticity = 0.5
 
     # walls
     static: list[pymunk.Shape] = [
@@ -92,10 +102,10 @@ async def handler(websocket: WebSocketServerProtocol) -> None:
     ]
     for s in static:
         s.friction = 0.5
-        s.group = 1
+        s.group = 2
         s.elasticity = 0.5
 
-    space.add(torso, poly, *static)
+    space.add(torso, torso_box, leg, leg_box, *static)
     space.add_default_collision_handler()
 
     last_frame = time()
@@ -112,10 +122,13 @@ async def handler(websocket: WebSocketServerProtocol) -> None:
             space.step(1.0 / (FPS * STEPS_PER_FRAME))
 
         # read the new position
-        x, y = torso.position
-        angle = torso.angle
+        torso_x, torso_y = torso.position
+        leg_x, leg_y = leg.position
 
-        position = {"x": x, "y": y, "angle": angle}
+        position = {
+            "torso": {"x": torso_x, "y": torso_y, "angle": torso.angle},
+            "leg": {"x": leg_x, "y": leg_y, "angle": leg.angle},
+        }
         message = json.dumps(position)
 
         await websocket.send(message)

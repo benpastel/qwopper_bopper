@@ -18,11 +18,15 @@ function receivePosition(websocket) {
   websocket.addEventListener("message", ({ data }) => {
     const event = JSON.parse(data);
 
-    const x = event["x"];
-    const y = event["y"];
-    const angleRadians = event["angle"];
+    const torso_x = event["torso"]["x"];
+    const torso_y = event["torso"]["y"];
+    const torso_angle = event["torso"]["angle"];
+    setPosition("torso", torso_x, torso_y, torso_angle);
 
-    setPosition("torso1", x, y, angleRadians);
+    const leg_x = event["torso"]["x"];
+    const leg_y = event["torso"]["y"];
+    const leg_angle = event["torso"]["angle"];
+    setPosition("leg", leg_x, leg_y, leg_angle);
   });
 }
 

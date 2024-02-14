@@ -8,7 +8,7 @@
 
 #gameContainer img {
   position: absolute;
-  left: 100px;
-  top: 100px;
+  left: 200px;
+  top: 200px;
   transform: translate(-50%, -50%) rotate(0rad);
 }
