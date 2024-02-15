@@ -37,7 +37,7 @@ async def listen_for_keydown(websocket: WebSocketServerProtocol) -> None:
             LAST_KEYDOWN = event["keydown"]
 
 
-def apply_force_from_keypress(body: pymunk.Body) -> None:
+def apply_force_from_keypress(body: pymunk.Body, motor: pymunk.SimpleMotor) -> None:
     """
     Read the last keydown & reset it to None
     use it to apply a force to the body
@@ -49,6 +49,7 @@ def apply_force_from_keypress(body: pymunk.Body) -> None:
     LAST_KEYDOWN = None
 
     impulse = (0, 0)
+    motor.rate = 0
     if keydown == "ArrowLeft":
         impulse = (-IMPULSE, 0)
     elif keydown == "ArrowRight":
@@ -57,6 +58,10 @@ def apply_force_from_keypress(body: pymunk.Body) -> None:
         impulse = (0, -IMPULSE)
     elif keydown == "ArrowDown":
         impulse = (0, IMPULSE)
+    elif keydown and keydown.lower() == "q":
+        motor.rate = -10
+    elif keydown and keydown.lower() == "w":
+        motor.rate = 10
 
     body.apply_impulse_at_local_point(impulse)
 
@@ -105,6 +110,8 @@ async def handler(websocket: WebSocketServerProtocol) -> None:
     leg_anchor = LEG_JOINT_OFFSET - LEG_SIZE[0] / 2, LEG_JOINT_OFFSET - LEG_SIZE[1] / 2
     joint = pymunk.PivotJoint(torso, leg, torso_anchor, leg_anchor)
 
+    motor = pymunk.SimpleMotor(torso, leg, rate=0)
+
     # walls
     static: list[pymunk.Shape] = [
         pymunk.Segment(space.static_body, (-10, -10), (-10, HEIGHT + 10), 10),
@@ -121,7 +128,7 @@ async def handler(websocket: WebSocketServerProtocol) -> None:
         s.group = 2
         s.elasticity = 0.5
 
-    space.add(torso, torso_box, leg, leg_box, joint, *static)
+    space.add(torso, torso_box, leg, leg_box, joint, motor, *static)
 
     last_frame = time()
     while True:
@@ -130,7 +137,7 @@ async def handler(websocket: WebSocketServerProtocol) -> None:
         await asyncio.sleep(next_frame - time())
         last_frame = next_frame
 
-        apply_force_from_keypress(torso)
+        apply_force_from_keypress(torso, motor)
 
         # step the position
         for _ in range(STEPS_PER_FRAME):
