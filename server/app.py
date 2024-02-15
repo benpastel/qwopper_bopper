@@ -73,21 +73,27 @@ async def handler(websocket: WebSocketServerProtocol) -> None:
 
     space = pymunk.Space()
     space.gravity = 0, GRAVITY
+    space.add_default_collision_handler()
+
     torso = pymunk.Body(mass=10, moment=1000)
-    torso.position = 400, 400
+    torso.position = 100, 100
     torso.angle = 0
 
     leg = pymunk.Body(mass=10, moment=500)
-    leg.position = 100, 100
+    leg.position = 100 + 127 - (35 / 2), 100 + 228 - (36 / 2)
     leg.angle = 0
 
     torso_box = pymunk.Poly.create_box(torso, size=TORSO_SIZE)
-    torso_box.group = 0
+    torso_box.group = 3
     torso_box.elasticity = 0.5
 
     leg_box = pymunk.Poly.create_box(leg, size=LEG_SIZE)
-    leg_box.group = 1
+    leg_box.group = 3
     leg_box.elasticity = 0.5
+
+    torso_box.filter = pymunk.ShapeFilter(group=3)
+    leg_box.filter = pymunk.ShapeFilter(group=3)
+    # joint = pymunk.PivotJoint(torso, leg, (127, 228), (35, 36))
 
     # walls
     static: list[pymunk.Shape] = [
@@ -106,7 +112,6 @@ async def handler(websocket: WebSocketServerProtocol) -> None:
         s.elasticity = 0.5
 
     space.add(torso, torso_box, leg, leg_box, *static)
-    space.add_default_collision_handler()
 
     last_frame = time()
     while True:
