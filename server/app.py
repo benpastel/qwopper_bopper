@@ -19,6 +19,10 @@ STEPS_PER_FRAME = 10
 TORSO_SIZE = (164, 254)
 LEG_SIZE = (60, 275)
 
+# how many pixels from each edge
+# are the torso & leg anchors?
+LEG_JOINT_OFFSET = 30
+
 LAST_KEYDOWN: None | str = None
 
 
@@ -80,7 +84,7 @@ async def handler(websocket: WebSocketServerProtocol) -> None:
     torso.angle = 0
 
     leg = pymunk.Body(mass=10, moment=500)
-    leg.position = 100 + 127 - (35 / 2), 100 + 228 - (36 / 2)
+    leg.position = 100, 100
     leg.angle = 0
 
     torso_box = pymunk.Poly.create_box(torso, size=TORSO_SIZE)
@@ -93,7 +97,13 @@ async def handler(websocket: WebSocketServerProtocol) -> None:
 
     torso_box.filter = pymunk.ShapeFilter(group=3)
     leg_box.filter = pymunk.ShapeFilter(group=3)
-    # joint = pymunk.PivotJoint(torso, leg, (127, 228), (35, 36))
+
+    torso_anchor = (
+        TORSO_SIZE[0] / 2 - LEG_JOINT_OFFSET,
+        TORSO_SIZE[1] / 2 - LEG_JOINT_OFFSET,
+    )
+    leg_anchor = LEG_JOINT_OFFSET - LEG_SIZE[0] / 2, LEG_JOINT_OFFSET - LEG_SIZE[1] / 2
+    joint = pymunk.PivotJoint(torso, leg, torso_anchor, leg_anchor)
 
     # walls
     static: list[pymunk.Shape] = [
@@ -111,7 +121,7 @@ async def handler(websocket: WebSocketServerProtocol) -> None:
         s.group = 2
         s.elasticity = 0.5
 
-    space.add(torso, torso_box, leg, leg_box, *static)
+    space.add(torso, torso_box, leg, leg_box, joint, *static)
 
     last_frame = time()
     while True:
