@@ -20,6 +20,7 @@ function receivePosition(websocket) {
 
     setPosition("torso", event.torso);
     setPosition("rleg", event.rleg);
+    setPosition("lleg", event.lleg);
   });
 }
 

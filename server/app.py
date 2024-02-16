@@ -40,10 +40,10 @@ async def listen_for_keydown(websocket: WebSocketServerProtocol) -> None:
             LAST_KEYDOWN = event["keydown"]
 
 
-def apply_force_from_keypress(body: pymunk.Body, motor: pymunk.SimpleMotor) -> None:
+def apply_keypress(lmotor: pymunk.SimpleMotor, rmotor: pymunk.SimpleMotor) -> None:
     """
     Read the last keydown & reset it to None
-    use it to apply a force to the body
+    Adjust the motor rates based on the keydown
     """
 
     # read & reset the last keydown
@@ -51,27 +51,22 @@ def apply_force_from_keypress(body: pymunk.Body, motor: pymunk.SimpleMotor) -> N
     keydown = LAST_KEYDOWN
     LAST_KEYDOWN = None
 
-    impulse = (0, 0)
+    # decay prexisting motor rates toward 0
+    for motor in [lmotor, rmotor]:
+        if motor.rate > 0:
+            motor.rate -= 1
+        if motor.rate < 0:
+            motor.rate += 1
 
-    if motor.rate > 0:
-        motor.rate -= 1
-    if motor.rate < 0:
-        motor.rate += 1
-
-    if keydown == "ArrowLeft":
-        impulse = (-IMPULSE, 0)
-    elif keydown == "ArrowRight":
-        impulse = (IMPULSE, 0)
-    elif keydown == "ArrowUp":
-        impulse = (0, -IMPULSE)
-    elif keydown == "ArrowDown":
-        impulse = (0, IMPULSE)
-    elif keydown and keydown.lower() == "q":
-        motor.rate = -10
+    # update based on keydown
+    if keydown and keydown.lower() == "q":
+        # open legs
+        lmotor.rate = -10
+        rmotor.rate = 10
     elif keydown and keydown.lower() == "w":
-        motor.rate = 10
-
-    body.apply_impulse_at_local_point(impulse)
+        # close legs
+        lmotor.rate = 10
+        rmotor.rate = -10
 
 
 def add_walls(space: pymunk.Space) -> None:
@@ -120,6 +115,10 @@ async def handler(websocket: WebSocketServerProtocol) -> None:
     rleg.position = 100, 100
     rleg.angle = 0
 
+    lleg = pymunk.Body(mass=10, moment=500)
+    lleg.position = 100, 100
+    lleg.angle = 0
+
     torso_box = pymunk.Poly.create_box(torso, size=TORSO_SIZE)
     torso_box.group = BODY_GROUP
     torso_box.elasticity = 0.5
@@ -128,19 +127,33 @@ async def handler(websocket: WebSocketServerProtocol) -> None:
     rleg_box.group = BODY_GROUP
     rleg_box.elasticity = 0.5
 
+    lleg_box = pymunk.Poly.create_box(lleg, size=LEG_SIZE)
+    lleg_box.group = BODY_GROUP
+    lleg_box.elasticity = 0.5
+
     torso_box.filter = pymunk.ShapeFilter(group=BODY_GROUP)
     rleg_box.filter = pymunk.ShapeFilter(group=BODY_GROUP)
+    lleg_box.filter = pymunk.ShapeFilter(group=BODY_GROUP)
 
-    torso_anchor = (
+    rtorso_anchor = (
         TORSO_SIZE[0] / 2 - LEG_JOINT_OFFSET,
         TORSO_SIZE[1] / 2 - LEG_JOINT_OFFSET,
     )
+    ltorso_anchor = (
+        LEG_JOINT_OFFSET - TORSO_SIZE[0] / 2,
+        TORSO_SIZE[1] / 2 - LEG_JOINT_OFFSET,
+    )
     rleg_anchor = LEG_JOINT_OFFSET - LEG_SIZE[0] / 2, LEG_JOINT_OFFSET - LEG_SIZE[1] / 2
-    joint = pymunk.PivotJoint(torso, rleg, torso_anchor, rleg_anchor)
+    lleg_anchor = LEG_SIZE[0] / 2 - LEG_JOINT_OFFSET, LEG_JOINT_OFFSET - LEG_SIZE[1] / 2
+    rjoint = pymunk.PivotJoint(torso, rleg, rtorso_anchor, rleg_anchor)
+    ljoint = pymunk.PivotJoint(torso, lleg, ltorso_anchor, lleg_anchor)
 
-    motor = pymunk.SimpleMotor(torso, rleg, rate=0)
+    rmotor = pymunk.SimpleMotor(torso, rleg, rate=0)
+    lmotor = pymunk.SimpleMotor(torso, lleg, rate=0)
 
-    space.add(torso, torso_box, rleg, rleg_box, joint, motor)
+    space.add(torso, torso_box)
+    space.add(rleg, rleg_box, rjoint, rmotor)
+    space.add(lleg, lleg_box, ljoint, lmotor)
 
     last_frame = time()
     while True:
@@ -149,7 +162,7 @@ async def handler(websocket: WebSocketServerProtocol) -> None:
         await asyncio.sleep(next_frame - time())
         last_frame = next_frame
 
-        apply_force_from_keypress(torso, motor)
+        apply_keypress(rmotor, lmotor)
 
         # step the position
         for _ in range(STEPS_PER_FRAME):
@@ -158,10 +171,12 @@ async def handler(websocket: WebSocketServerProtocol) -> None:
         # read the new position
         torso_x, torso_y = torso.position
         rleg_x, rleg_y = rleg.position
+        lleg_x, lleg_y = lleg.position
 
         position = {
             "torso": {"x": torso_x, "y": torso_y, "angle": torso.angle},
             "rleg": {"x": rleg_x, "y": rleg_y, "angle": rleg.angle},
+            "lleg": {"x": lleg_x, "y": lleg_y, "angle": lleg.angle},
         }
         message = json.dumps(position)
 
