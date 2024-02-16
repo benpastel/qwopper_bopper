@@ -49,7 +49,12 @@ def apply_force_from_keypress(body: pymunk.Body, motor: pymunk.SimpleMotor) -> N
     LAST_KEYDOWN = None
 
     impulse = (0, 0)
-    motor.rate = 0
+
+    if motor.rate > 0:
+        motor.rate -= 1
+    if motor.rate < 0:
+        motor.rate += 1
+
     if keydown == "ArrowLeft":
         impulse = (-IMPULSE, 0)
     elif keydown == "ArrowRight":
