@@ -19,6 +19,9 @@ STEPS_PER_FRAME = 10
 TORSO_SIZE = (164, 254)
 LEG_SIZE = (60, 275)
 
+WALL_GROUP = 1
+BODY_GROUP = 2
+
 # how many pixels from each edge
 # are the torso & leg anchors?
 LEG_JOINT_OFFSET = 30
@@ -71,6 +74,25 @@ def apply_force_from_keypress(body: pymunk.Body, motor: pymunk.SimpleMotor) -> N
     body.apply_impulse_at_local_point(impulse)
 
 
+def add_walls(space: pymunk.Space) -> None:
+    walls: list[pymunk.Shape] = [
+        pymunk.Segment(space.static_body, (-10, -10), (-10, HEIGHT + 10), 10),
+        pymunk.Segment(space.static_body, (-10, -10), (WIDTH + 10, -10), 10),
+        pymunk.Segment(
+            space.static_body, (WIDTH + 10, -10), (WIDTH + 10, HEIGHT + 10), 10
+        ),
+        pymunk.Segment(
+            space.static_body, (-10, HEIGHT + 10), (WIDTH + 10, HEIGHT + 10), 10
+        ),
+    ]
+    for w in walls:
+        w.friction = 0.5
+        w.group = WALL_GROUP
+        w.elasticity = 0.5
+
+    space.add(*walls)
+
+
 async def handler(websocket: WebSocketServerProtocol) -> None:
     assert isinstance(websocket, WebSocketServerProtocol)
     task = asyncio.create_task(listen_for_keydown(websocket))
@@ -88,52 +110,37 @@ async def handler(websocket: WebSocketServerProtocol) -> None:
     space = pymunk.Space()
     space.gravity = 0, GRAVITY
     space.add_default_collision_handler()
+    add_walls(space)
 
     torso = pymunk.Body(mass=10, moment=1000)
     torso.position = 100, 100
     torso.angle = 0
 
-    leg = pymunk.Body(mass=10, moment=500)
-    leg.position = 100, 100
-    leg.angle = 0
+    rleg = pymunk.Body(mass=10, moment=500)
+    rleg.position = 100, 100
+    rleg.angle = 0
 
     torso_box = pymunk.Poly.create_box(torso, size=TORSO_SIZE)
-    torso_box.group = 3
+    torso_box.group = BODY_GROUP
     torso_box.elasticity = 0.5
 
-    leg_box = pymunk.Poly.create_box(leg, size=LEG_SIZE)
-    leg_box.group = 3
-    leg_box.elasticity = 0.5
+    rleg_box = pymunk.Poly.create_box(rleg, size=LEG_SIZE)
+    rleg_box.group = BODY_GROUP
+    rleg_box.elasticity = 0.5
 
-    torso_box.filter = pymunk.ShapeFilter(group=3)
-    leg_box.filter = pymunk.ShapeFilter(group=3)
+    torso_box.filter = pymunk.ShapeFilter(group=BODY_GROUP)
+    rleg_box.filter = pymunk.ShapeFilter(group=BODY_GROUP)
 
     torso_anchor = (
         TORSO_SIZE[0] / 2 - LEG_JOINT_OFFSET,
         TORSO_SIZE[1] / 2 - LEG_JOINT_OFFSET,
     )
-    leg_anchor = LEG_JOINT_OFFSET - LEG_SIZE[0] / 2, LEG_JOINT_OFFSET - LEG_SIZE[1] / 2
-    joint = pymunk.PivotJoint(torso, leg, torso_anchor, leg_anchor)
+    rleg_anchor = LEG_JOINT_OFFSET - LEG_SIZE[0] / 2, LEG_JOINT_OFFSET - LEG_SIZE[1] / 2
+    joint = pymunk.PivotJoint(torso, rleg, torso_anchor, rleg_anchor)
 
-    motor = pymunk.SimpleMotor(torso, leg, rate=0)
+    motor = pymunk.SimpleMotor(torso, rleg, rate=0)
 
-    # walls
-    static: list[pymunk.Shape] = [
-        pymunk.Segment(space.static_body, (-10, -10), (-10, HEIGHT + 10), 10),
-        pymunk.Segment(space.static_body, (-10, -10), (WIDTH + 10, -10), 10),
-        pymunk.Segment(
-            space.static_body, (WIDTH + 10, -10), (WIDTH + 10, HEIGHT + 10), 10
-        ),
-        pymunk.Segment(
-            space.static_body, (-10, HEIGHT + 10), (WIDTH + 10, HEIGHT + 10), 10
-        ),
-    ]
-    for s in static:
-        s.friction = 0.5
-        s.group = 2
-        s.elasticity = 0.5
-
-    space.add(torso, torso_box, leg, leg_box, joint, motor, *static)
+    space.add(torso, torso_box, rleg, rleg_box, joint, motor)
 
     last_frame = time()
     while True:
@@ -150,11 +157,11 @@ async def handler(websocket: WebSocketServerProtocol) -> None:
 
         # read the new position
         torso_x, torso_y = torso.position
-        leg_x, leg_y = leg.position
+        rleg_x, rleg_y = rleg.position
 
         position = {
             "torso": {"x": torso_x, "y": torso_y, "angle": torso.angle},
-            "leg": {"x": leg_x, "y": leg_y, "angle": leg.angle},
+            "rleg": {"x": rleg_x, "y": rleg_y, "angle": rleg.angle},
         }
         message = json.dumps(position)
 

@@ -6,11 +6,11 @@ function getWebSocketServer() {
   }
 }
 
-function setPosition(characterId, x, y, angleRadians) {
+function setPosition(characterId, position) {
   var character = document.getElementById(characterId);
-  character.style.left = x + 'px';
-  character.style.top = y + 'px';
-  character.style.transform = 'translate(-50%, -50%) rotate(' + angleRadians + 'rad)';
+  character.style.left = position.x + 'px';
+  character.style.top = position.y + 'px';
+  character.style.transform = 'translate(-50%, -50%) rotate(' + position.angle + 'rad)';
 }
 
 function receivePosition(websocket) {
@@ -18,15 +18,8 @@ function receivePosition(websocket) {
   websocket.addEventListener("message", ({ data }) => {
     const event = JSON.parse(data);
 
-    const torso_x = event["torso"]["x"];
-    const torso_y = event["torso"]["y"];
-    const torso_angle = event["torso"]["angle"];
-    setPosition("torso", torso_x, torso_y, torso_angle);
-
-    const leg_x = event["leg"]["x"];
-    const leg_y = event["leg"]["y"];
-    const leg_angle = event["leg"]["angle"];
-    setPosition("leg", leg_x, leg_y, leg_angle);
+    setPosition("torso", event.torso);
+    setPosition("rleg", event.rleg);
   });
 }
 
