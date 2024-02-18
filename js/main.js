@@ -3,6 +3,9 @@ const BLUE_PLAYER = "blue";
 const RED_PLAYER = "red";
 const PLAYERS = [BLUE_PLAYER, RED_PLAYER];
 
+// list of damage sparkles we are currently displaying
+const SPARKLES = [];
+
 function joinGame(websocket) {
   websocket.addEventListener("open", () => {
     // send an "join" event informing the server which player we are
@@ -31,7 +34,7 @@ function getWebSocketServer() {
   }
 }
 
-function setPosition(player, part, position) {
+function drawPart(player, part, position) {
   const elementId = `${player}-${part}`
   var character = document.getElementById(elementId);
   character.style.left = position.x + 'px';
@@ -43,19 +46,64 @@ function receiveState(websocket) {
   websocket.addEventListener("message", ({ data }) => {
     const event = JSON.parse(data);
 
+    // draw each part of each player's fighters
     for (const player of PLAYERS) {
       const position = event[player];
 
-      setPosition(player, "torso", position.torso);
-      setPosition(player, "rleg", position.rleg);
-      setPosition(player, "lleg", position.lleg);
+      drawPart(player, "torso", position.torso);
+      drawPart(player, "rleg", position.rleg);
+      drawPart(player, "lleg", position.lleg);
     }
 
-    const damagePoints = event.damagePoints;
-    if (damagePoints.length > 0) {
-      console.log(damagePoints);
+    // initialize a sparkle animation for each damage point
+    const points = event.damagePoints;
+    for (const point of points) {
+      SPARKLES.push({
+        x: point.x,
+        y: point.y,
+        alpha: 1.0,
+        size: 50
+      });
     }
   });
+}
+
+function drawSparkle(context, sparkle) {
+  // Draw a red circle with alpha, representing damage
+  context.strokeStyle = `rgba(255, 0, 0, ${sparkle.alpha})`; // Red with alpha
+  context.beginPath();
+  context.arc(sparkle.x, sparkle.y, sparkle.size, 0, 2 * Math.PI);
+  context.stroke();
+}
+
+function animateSparkles() {
+  const canvas = document.getElementById('canvas');
+  canvas.width = document.getElementById('gameContainer').offsetWidth;
+  canvas.height = document.getElementById('gameContainer').offsetHeight;
+  const ctx = canvas.getContext('2d');
+
+  function animate() {
+     // clear canvas
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    // animate sparkles in reverse order
+    // because additional sparkles may be appended while we animate
+    for (let i = SPARKLES.length - 1; i >= 0; i--) {
+      const sparkle = SPARKLES[i];
+      sparkle.alpha -= 0.02; // fade out
+      sparkle.size -= 0.5; // shrink
+
+      if (sparkle.alpha <= 0 || sparkle.size <= 0) {
+        // finished; remove the sparkle
+        SPARKLES.splice(i, 1);
+      } else {
+        drawSparkle(ctx, sparkle);
+      }
+    }
+    // schedule the next animate
+    requestAnimationFrame(animate);
+  }
+  animate();
 }
 
 function sendKeyEvents(websocket) {
@@ -84,4 +132,5 @@ window.addEventListener("DOMContentLoaded", () => {
   joinGame(websocket);
   receiveState(websocket);
   sendKeyEvents(websocket);
+  animateSparkles();
 });
