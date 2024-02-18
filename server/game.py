@@ -2,12 +2,18 @@ from time import time
 import json
 from enum import Enum
 from websockets.server import WebSocketServerProtocol
+from typing import Any
 
 import asyncio
 
 import pymunk  # type: ignore
 
-from server.fighter import Fighter, add_fighter
+from server.fighter import (
+    Fighter,
+    add_fighter,
+    TAKE_DAMAGE_COLLISION_TYPE,
+    DEAL_DAMAGE_COLLISION_TYPE,
+)
 
 
 class Player(str, Enum):
@@ -33,11 +39,19 @@ BLUE_GROUP = 3
 # player -> last key pressed down this turn, if any
 LAST_KEYDOWNS: dict[Player, str | None] = {player: None for player in Player}
 
-FIGHTERS: dict[Player, Fighter] = {}  # TODO
+FIGHTERS: dict[Player, Fighter] = {}
 
 # a persistent reference to each keydown listener so they don't get
 # garbage collected
 KEYDOWN_LISTENERS: dict[Player, asyncio.Task] = {}
+
+# accumulated damage to each player
+DAMAGE: dict[Player, int] = {player: 0 for player in Player}
+
+# points in global coordinates that took damage this frame
+# added during physics collision
+# read & reset to empty when broadcasting state at end of frame
+LAST_DAMAGE_POINTS: set[pymunk.vec2d.Vec2d] = set()
 
 
 async def _listen_for_keydown(
@@ -105,15 +119,21 @@ def _add_walls(space: pymunk.Space) -> None:
     space.add(*walls)
 
 
-async def _broadcast_positions(
-    websockets: dict[Player, WebSocketServerProtocol]
-) -> None:
+async def _broadcast_state(websockets: dict[Player, WebSocketServerProtocol]) -> None:
     """
-    Send the position of each fighter to each player.
+    Send the position of each fighter to each player and the list of damage
     """
-    event = {
+    # read & reset damage points
+    global LAST_DAMAGE_POINTS
+    damage_points = LAST_DAMAGE_POINTS
+    LAST_DAMAGE_POINTS = set()
+
+    event: dict[str, Any] = {
         player.value: fighter.position_json() for player, fighter in FIGHTERS.items()
     }
+    event["damagePoints"] = [
+        {"x": float(point.x), "y": float(point.y)} for point in damage_points
+    ]
     async with asyncio.TaskGroup() as tg:
         for websocket in websockets.values():
             message = json.dumps(event)
@@ -128,6 +148,28 @@ def _keydown_exception_handler(task: asyncio.Task) -> None:
             raise exception
     except asyncio.CancelledError:
         pass
+
+
+def deal_damage(arbiter: pymunk.Arbiter, space: pymunk.Space, data: dict) -> bool:
+    shape_a, shape_b = arbiter.shapes
+
+    # figure out which player took the damage
+    receiving_player: Player | None = None
+    for player, fighter in FIGHTERS.items():
+        if shape_a in fighter.take_damage_shapes():
+            receiving_player = player
+    assert receiving_player
+
+    # TODO set based on impact or something
+    DAMAGE[receiving_player] += 1
+
+    for point in arbiter.contact_point_set.points:
+        # TODO only add the point corresponding the receiving shape
+        LAST_DAMAGE_POINTS.add(point.point_a)
+        LAST_DAMAGE_POINTS.add(point.point_b)
+
+    print(f"{DAMAGE=}, {len(LAST_DAMAGE_POINTS)=}")
+    return True
 
 
 async def play_game(websockets: dict[Player, WebSocketServerProtocol]) -> None:
@@ -145,6 +187,10 @@ async def play_game(websockets: dict[Player, WebSocketServerProtocol]) -> None:
 
     FIGHTERS[Player.RED] = add_fighter(space, RED_GROUP, (100, 100))
     FIGHTERS[Player.BLUE] = add_fighter(space, BLUE_GROUP, (WIDTH - 100, 100))
+    damage_handler = space.add_collision_handler(
+        TAKE_DAMAGE_COLLISION_TYPE, DEAL_DAMAGE_COLLISION_TYPE
+    )
+    damage_handler.post_solve = deal_damage
 
     last_frame = time()
     while True:
@@ -161,4 +207,4 @@ async def play_game(websockets: dict[Player, WebSocketServerProtocol]) -> None:
         for _ in range(STEPS_PER_FRAME):
             space.step(1.0 / (FPS * STEPS_PER_FRAME))
 
-        await _broadcast_positions(websockets)
+        await _broadcast_state(websockets)

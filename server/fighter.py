@@ -9,6 +9,9 @@ LEG_SIZE = (60, 275)
 # are the torso & leg anchors?
 LEG_JOINT_OFFSET = 30
 
+TAKE_DAMAGE_COLLISION_TYPE = 1
+DEAL_DAMAGE_COLLISION_TYPE = 2
+
 
 class Fighter(NamedTuple):
     torso: pymunk.Body
@@ -38,6 +41,10 @@ class Fighter(NamedTuple):
             "lleg": {"x": lleg_x, "y": lleg_y, "angle": self.lleg.angle},
         }
 
+    def take_damage_shapes(self) -> list[pymunk.Shape]:
+        """Shapes that take damage if struck by an oppponent."""
+        return [self.torso_box]
+
 
 def add_fighter(
     space: pymunk.Space, group: int, starting_position: tuple[int, int]
@@ -57,14 +64,17 @@ def add_fighter(
     torso_box = pymunk.Poly.create_box(torso, size=TORSO_SIZE)
     torso_box.group = group
     torso_box.elasticity = 0.5
+    torso_box.collision_type = TAKE_DAMAGE_COLLISION_TYPE
 
     rleg_box = pymunk.Poly.create_box(rleg, size=LEG_SIZE)
     rleg_box.group = group
     rleg_box.elasticity = 0.5
+    rleg_box.collision_type = DEAL_DAMAGE_COLLISION_TYPE
 
     lleg_box = pymunk.Poly.create_box(lleg, size=LEG_SIZE)
     lleg_box.group = group
     lleg_box.elasticity = 0.5
+    lleg_box.collision_type = DEAL_DAMAGE_COLLISION_TYPE
 
     torso_box.filter = pymunk.ShapeFilter(group=group)
     rleg_box.filter = pymunk.ShapeFilter(group=group)

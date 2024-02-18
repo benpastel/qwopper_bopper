@@ -39,7 +39,7 @@ function setPosition(player, part, position) {
   character.style.transform = 'translate(-50%, -50%) rotate(' + position.angle + 'rad)';
 }
 
-function receivePositions(websocket) {
+function receiveState(websocket) {
   websocket.addEventListener("message", ({ data }) => {
     const event = JSON.parse(data);
 
@@ -50,6 +50,9 @@ function receivePositions(websocket) {
       setPosition(player, "rleg", position.rleg);
       setPosition(player, "lleg", position.lleg);
     }
+
+    const damagePoints = event.damagePoints;
+    console.log(damagePoints);
   });
 }
 
@@ -77,6 +80,6 @@ function sendKeyEvents(websocket) {
 window.addEventListener("DOMContentLoaded", () => {
   const websocket = new WebSocket(getWebSocketServer());
   joinGame(websocket);
-  receivePositions(websocket);
+  receiveState(websocket);
   sendKeyEvents(websocket);
 });
