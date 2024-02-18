@@ -10,8 +10,8 @@ import pymunk  # type: ignore
 from websockets.server import WebSocketServerProtocol, serve
 
 
-WIDTH = 800
-HEIGHT = 600
+WIDTH = 1600
+HEIGHT = 800
 FPS = 60
 IMPULSE = 1000
 GRAVITY = 500

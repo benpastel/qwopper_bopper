@@ -1,9 +1,10 @@
 #gameContainer {
-  width: 800px;
-  height: 600px;
+  width: 1600px;
+  height: 800px;
   border: 2px solid black;
   position: relative;
   overflow: hidden;
+  margin: auto;
 }
 
 #gameContainer img {
