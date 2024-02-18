@@ -31,8 +31,9 @@ function getWebSocketServer() {
   }
 }
 
-function setPosition(player, characterId, position) {
-  var character = document.getElementById(characterId);
+function setPosition(player, part, position) {
+  const elementId = `${player}-${part}`
+  var character = document.getElementById(elementId);
   character.style.left = position.x + 'px';
   character.style.top = position.y + 'px';
   character.style.transform = 'translate(-50%, -50%) rotate(' + position.angle + 'rad)';
