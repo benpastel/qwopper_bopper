@@ -1,3 +1,27 @@
+
+const BLUE_PLAYER = "blue";
+const RED_PLAYER = "red";
+
+function joinGame(prompt, websocket) {
+  websocket.addEventListener("open", () => {
+    // send an "join" event informing the server which player we are
+    // based on hardcoded url ?player=blue or ?player=red
+    const params = new URLSearchParams(window.location.search);
+    const player = params.get("player");
+    if (! (player === BLUE_PLAYER || player === RED_PLAYER)) {
+      const msg = `⚠️⚠️⚠️<br>Set your url to ?player=${BLUE_PLAYER} or ?player=${RED_PLAYER}<br>⚠️⚠️⚠️`;
+      prompt.innerHTML = msg;
+      console.log(params);
+      throw new Error(msg);
+    }
+    const event = {
+      type: "join",
+      player
+    };
+    websocket.send(JSON.stringify(event));
+  });
+}
+
 function getWebSocketServer() {
   if (window.location.host === "localhost:8000") {
     return "ws://localhost:8001/";
