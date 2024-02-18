@@ -26,7 +26,7 @@ async def handler(websocket: WebSocketServerProtocol) -> None:
     assert isinstance(websocket, WebSocketServerProtocol)
     message = await websocket.recv()
     event = json.loads(message)
-    assert event["type"] == "join"
+    assert "type" in event and event["type"] == "join", f"unexpected {event=}"
 
     player = Player(event["player"])
     WEBSOCKETS[player] = websocket

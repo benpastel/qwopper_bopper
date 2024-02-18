@@ -30,11 +30,6 @@ WALL_GROUP = 1
 RED_GROUP = 2
 BLUE_GROUP = 3
 
-# For now we support at most one game at a time.
-# this tracks the websocket of each connected player
-# until both players are connected and we can start the game.
-WEBSOCKETS: dict[Player, WebSocketServerProtocol] = {}
-
 # player -> last key pressed down this turn, if any
 LAST_KEYDOWNS: dict[Player, str | None] = {player: None for player in Player}
 
@@ -45,14 +40,14 @@ FIGHTERS: dict[Player, Fighter] = {}  # TODO
 KEYDOWN_LISTENERS: dict[Player, asyncio.Task] = {}
 
 
-async def _listen_for_keydown(player: Player) -> None:
+async def _listen_for_keydown(
+    player: Player, websocket: WebSocketServerProtocol
+) -> None:
     """
     Listen for keydown and write it to `LAST_KEYDOWNS`.
 
     We'll use the most recent one per player when it's time for the next position.
     """
-    websocket = WEBSOCKETS[player]
-
     while True:
         message = await websocket.recv()
         event = json.loads(message)
@@ -110,15 +105,17 @@ def _add_walls(space: pymunk.Space) -> None:
     space.add(*walls)
 
 
-async def _broadcast_positions() -> None:
+async def _broadcast_positions(
+    websockets: dict[Player, WebSocketServerProtocol]
+) -> None:
     """
     Send the position of each fighter to each player.
     """
     event = {
-        player.value: fighter.position_json for player, fighter in FIGHTERS.items()
+        player.value: fighter.position_json() for player, fighter in FIGHTERS.items()
     }
     async with asyncio.TaskGroup() as tg:
-        for websocket in WEBSOCKETS.values():
+        for websocket in websockets.values():
             message = json.dumps(event)
             coroutine = websocket.send(message)
             tg.create_task(coroutine)
@@ -136,7 +133,8 @@ def _keydown_exception_handler(task: asyncio.Task) -> None:
 async def play_game(websockets: dict[Player, WebSocketServerProtocol]) -> None:
     # listen for keypresses in background tasks
     for player in Player:
-        task = asyncio.create_task(_listen_for_keydown(player))
+        websocket = websockets[player]
+        task = asyncio.create_task(_listen_for_keydown(player, websocket))
         task.add_done_callback(_keydown_exception_handler)
         KEYDOWN_LISTENERS[player] = task
 
@@ -145,8 +143,8 @@ async def play_game(websockets: dict[Player, WebSocketServerProtocol]) -> None:
     space.add_default_collision_handler()
     _add_walls(space)
 
-    FIGHTERS[Player.RED] = add_fighter(space, RED_GROUP)
-    FIGHTERS[Player.BLUE] = add_fighter(space, BLUE_GROUP)
+    FIGHTERS[Player.RED] = add_fighter(space, RED_GROUP, (100, 100))
+    FIGHTERS[Player.BLUE] = add_fighter(space, BLUE_GROUP, (WIDTH - 100, 100))
 
     last_frame = time()
     while True:
@@ -163,4 +161,4 @@ async def play_game(websockets: dict[Player, WebSocketServerProtocol]) -> None:
         for _ in range(STEPS_PER_FRAME):
             space.step(1.0 / (FPS * STEPS_PER_FRAME))
 
-        await _broadcast_positions()
+        await _broadcast_positions(websockets)

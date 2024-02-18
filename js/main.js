@@ -1,8 +1,9 @@
 
 const BLUE_PLAYER = "blue";
 const RED_PLAYER = "red";
+const PLAYERS = [BLUE_PLAYER, RED_PLAYER];
 
-function joinGame(prompt, websocket) {
+function joinGame(websocket) {
   websocket.addEventListener("open", () => {
     // send an "join" event informing the server which player we are
     // based on hardcoded url ?player=blue or ?player=red
@@ -10,7 +11,7 @@ function joinGame(prompt, websocket) {
     const player = params.get("player");
     if (! (player === BLUE_PLAYER || player === RED_PLAYER)) {
       const msg = `⚠️⚠️⚠️<br>Set your url to ?player=${BLUE_PLAYER} or ?player=${RED_PLAYER}<br>⚠️⚠️⚠️`;
-      prompt.innerHTML = msg;
+      alert(msg);
       console.log(params);
       throw new Error(msg);
     }
@@ -30,21 +31,24 @@ function getWebSocketServer() {
   }
 }
 
-function setPosition(characterId, position) {
+function setPosition(player, characterId, position) {
   var character = document.getElementById(characterId);
   character.style.left = position.x + 'px';
   character.style.top = position.y + 'px';
   character.style.transform = 'translate(-50%, -50%) rotate(' + position.angle + 'rad)';
 }
 
-function receivePosition(websocket) {
-  // set the position & rotation of torso1
+function receivePositions(websocket) {
   websocket.addEventListener("message", ({ data }) => {
     const event = JSON.parse(data);
 
-    setPosition("torso", event.torso);
-    setPosition("rleg", event.rleg);
-    setPosition("lleg", event.lleg);
+    for (const player of PLAYERS) {
+      const position = event[player];
+
+      setPosition(player, "torso", position.torso);
+      setPosition(player, "rleg", position.rleg);
+      setPosition(player, "lleg", position.lleg);
+    }
   });
 }
 
@@ -71,7 +75,7 @@ function sendKeyEvents(websocket) {
 
 window.addEventListener("DOMContentLoaded", () => {
   const websocket = new WebSocket(getWebSocketServer());
-
-  receivePosition(websocket);
+  joinGame(websocket);
+  receivePositions(websocket);
   sendKeyEvents(websocket);
 });
