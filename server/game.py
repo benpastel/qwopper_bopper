@@ -132,7 +132,7 @@ async def _broadcast_state(websockets: dict[Player, WebSocketServerProtocol]) ->
         player.value: fighter.position_json() for player, fighter in FIGHTERS.items()
     }
     event["damagePoints"] = [
-        {"x": float(point.x), "y": float(point.y)} for point in damage_points
+        {"x": int(point.x), "y": int(point.y)} for point in damage_points
     ]
     async with asyncio.TaskGroup() as tg:
         for websocket in websockets.values():

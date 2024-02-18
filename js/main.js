@@ -52,7 +52,9 @@ function receiveState(websocket) {
     }
 
     const damagePoints = event.damagePoints;
-    console.log(damagePoints);
+    if (damagePoints.length > 0) {
+      console.log(damagePoints);
+    }
   });
 }
 
