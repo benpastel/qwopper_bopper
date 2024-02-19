@@ -45,6 +45,11 @@ function drawPart(player, part, position) {
   character.style.transform = 'translate(-50%, -50%) rotate(' + position.angle + 'rad)';
 }
 
+function updateScore(player, score) {
+  const element = document.querySelector(`.${player}.score`);
+  element.innerHTML = score;
+}
+
 function receiveState(websocket) {
   websocket.addEventListener("message", ({ data }) => {
     const event = JSON.parse(data);
@@ -67,6 +72,12 @@ function receiveState(websocket) {
         alpha: 1.0,
         size: 50
       });
+    }
+
+    // update scores
+    for (const player of PLAYERS) {
+      const score = event.scores[player];
+      updateScore(player, score);
     }
   });
 }

@@ -45,8 +45,7 @@ FIGHTERS: dict[Player, Fighter] = {}
 # garbage collected
 KEYDOWN_LISTENERS: dict[Player, asyncio.Task] = {}
 
-# accumulated damage to each player
-DAMAGE: dict[Player, int] = {player: 0 for player in Player}
+SCORES: dict[Player, int] = {player: 0 for player in Player}
 
 # points in global coordinates that took damage this frame
 # added during physics collision
@@ -134,6 +133,9 @@ async def _broadcast_state(websockets: dict[Player, WebSocketServerProtocol]) ->
     event["damagePoints"] = [
         {"x": int(point.x), "y": int(point.y)} for point in damage_points
     ]
+
+    event["scores"] = {player.value: SCORES[player] for player in Player}
+
     async with asyncio.TaskGroup() as tg:
         for websocket in websockets.values():
             message = json.dumps(event)
@@ -160,15 +162,12 @@ def deal_damage(arbiter: pymunk.Arbiter, space: pymunk.Space, data: dict) -> boo
             receiving_player = player
     assert receiving_player
 
-    # TODO set based on impact or something?
-    DAMAGE[receiving_player] += 1
+    SCORES[player] += 1
 
     for point in arbiter.contact_point_set.points:
         # TODO only add the point corresponding the receiving shape?
         LAST_DAMAGE_POINTS.add(point.point_a)
         LAST_DAMAGE_POINTS.add(point.point_b)
-
-    print(f"{DAMAGE=}, {len(LAST_DAMAGE_POINTS)=}")
     return True
 
 
