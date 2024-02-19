@@ -160,11 +160,11 @@ def deal_damage(arbiter: pymunk.Arbiter, space: pymunk.Space, data: dict) -> boo
             receiving_player = player
     assert receiving_player
 
-    # TODO set based on impact or something
+    # TODO set based on impact or something?
     DAMAGE[receiving_player] += 1
 
     for point in arbiter.contact_point_set.points:
-        # TODO only add the point corresponding the receiving shape
+        # TODO only add the point corresponding the receiving shape?
         LAST_DAMAGE_POINTS.add(point.point_a)
         LAST_DAMAGE_POINTS.add(point.point_b)
 

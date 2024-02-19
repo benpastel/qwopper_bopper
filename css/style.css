@@ -7,13 +7,6 @@
   margin: auto;
 }
 
-#gameContainer img {
-  position: absolute;
-  left: 200px;
-  top: 200px;
-  transform: translate(-50%, -50%) rotate(0rad);
-}
-
 #canvas {
   position: absolute;
   width: 100%;
@@ -21,3 +14,32 @@
   left: 0;
   top: 0;
 }
+
+#gameContainer img {
+  position: absolute;
+  left: 200px;
+  top: 200px;
+  transform: translate(-50%, -50%) rotate(0rad);
+}
+
+#scores {
+  display: flex;
+  font-family: 'Courier New';
+  font-weight: normal;
+  font-size: 100px;
+  text-align: center;
+}
+
+.score {
+  width: 50%;
+}
+
+.blue.score {
+  color: blue
+}
+
+.red.score {
+  color: red
+}
+
+
