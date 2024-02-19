@@ -38,8 +38,7 @@ function getWebSocketServer() {
 }
 
 function drawPart(player, part, position) {
-  const elementId = `${player}-${part}`
-  var character = document.getElementById(elementId);
+  var character = document.querySelector(`.${player}.${part}`);
   character.style.left = position.x + 'px';
   character.style.top = position.y + 'px';
   character.style.transform = 'translate(-50%, -50%) rotate(' + position.angle + 'rad)';
