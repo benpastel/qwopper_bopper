@@ -22,6 +22,14 @@
   transform: translate(-50%, -50%) rotate(0rad);
 }
 
+img.blue {
+  filter: sepia(1) saturate(2) hue-rotate(180deg);
+}
+
+img.red {
+  filter: sepia(1) saturate(10) hue-rotate(-10deg);
+}
+
 #scores {
   display: flex;
   font-family: 'Courier New';
