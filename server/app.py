@@ -3,6 +3,7 @@ import asyncio
 import json
 import os
 import signal
+import gc
 
 from websockets.server import WebSocketServerProtocol, serve
 
@@ -49,6 +50,10 @@ async def handler(websocket: WebSocketServerProtocol) -> None:
         for websocket in WEBSOCKETS.values():
             print("Disconnecting.")
             await websocket.close()
+
+    # trigger garbage collection between games
+    # so there's less likely to be a big collection during the game
+    gc.collect()
 
 
 async def main() -> None:
