@@ -161,8 +161,9 @@ def deal_damage(arbiter: pymunk.Arbiter, space: pymunk.Space, data: dict) -> boo
         if shape_a in fighter.take_damage_shapes():
             receiving_player = player
     assert receiving_player
+    dealing_player = other_player(receiving_player)
 
-    SCORES[player] += 1
+    SCORES[dealing_player] += 1
 
     for point in arbiter.contact_point_set.points:
         # TODO only add the point corresponding the receiving shape?
