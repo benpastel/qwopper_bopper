@@ -84,7 +84,7 @@ def _add_walls(space: pymunk.Space) -> None:
         ),
     ]
     for w in walls:
-        w.friction = 0.5
+        w.friction = 0.9 # TODO floor higher
         w.group = WALL_GROUP
         w.elasticity = 0.5
 
