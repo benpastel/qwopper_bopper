@@ -63,17 +63,17 @@ def add_fighter(
 
     torso_box = pymunk.Poly.create_box(torso, size=TORSO_SIZE)
     torso_box.group = group
-    torso_box.elasticity = 0.5
+    torso_box.elasticity = 0.05
     torso_box.collision_type = TAKE_DAMAGE_COLLISION_TYPE
 
     rleg_box = pymunk.Poly.create_box(rleg, size=LEG_SIZE)
     rleg_box.group = group
-    rleg_box.elasticity = 0.5
+    rleg_box.elasticity = 0.05
     rleg_box.collision_type = DEAL_DAMAGE_COLLISION_TYPE
 
     lleg_box = pymunk.Poly.create_box(lleg, size=LEG_SIZE)
     lleg_box.group = group
-    lleg_box.elasticity = 0.5
+    lleg_box.elasticity = 0.05
     lleg_box.collision_type = DEAL_DAMAGE_COLLISION_TYPE
 
     torso_box.filter = pymunk.ShapeFilter(group=group)
