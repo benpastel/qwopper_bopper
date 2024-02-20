@@ -49,15 +49,15 @@ class Fighter(NamedTuple):
 def add_fighter(
     space: pymunk.Space, group: int, starting_position: tuple[int, int]
 ) -> Fighter:
-    torso = pymunk.Body(mass=10, moment=1000)
+    torso = pymunk.Body(mass=100, moment=100)
     torso.position = starting_position
     torso.angle = 0
 
-    rleg = pymunk.Body(mass=10, moment=500)
+    rleg = pymunk.Body(mass=10, moment=50)
     rleg.position = starting_position
     rleg.angle = 0
 
-    lleg = pymunk.Body(mass=10, moment=500)
+    lleg = pymunk.Body(mass=10, moment=50)
     lleg.position = starting_position
     lleg.angle = 0
 
