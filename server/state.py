@@ -1,8 +1,6 @@
 from enum import Enum
 import asyncio
 
-import pymunk  # type: ignore
-
 from server.fighter import Fighter
 
 
@@ -20,10 +18,10 @@ class State:
 
     scores: dict[Player, int]
 
-    # points in global coordinates that took damage this frame
+    # striking player => set of points in global coordinates that took damage
     # added during physics collision
     # read & reset to empty when broadcasting state at end of frame
-    damage_points_this_frame: set[pymunk.vec2d.Vec2d]
+    hits_this_frame: dict[Player, set[tuple[int, int]]]
 
     # player -> key pressed down this frame, if any
     # read & reset to None when the keypress is used to update velocities
@@ -36,6 +34,6 @@ class State:
     def __init__(self):
         self.fighters = {}
         self.scores = {player: 0 for player in Player}
-        self.damage_points_this_frame = set()
+        self.hits_this_frame = {player: set() for player in Player}
         self.keydowns_this_frame = {player: None for player in Player}
         self.keydown_listeners = {}

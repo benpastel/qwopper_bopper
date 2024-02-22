@@ -55,7 +55,7 @@ function receiveState(websocket) {
 
     // draw each part of each player's fighters
     for (const player of PLAYERS) {
-      const position = event[player];
+      const position = event.positions[player];
 
       drawPart(player, "torso", position.torso);
       drawPart(player, "rleg", position.rleg);
@@ -63,14 +63,16 @@ function receiveState(websocket) {
     }
 
     // initialize a sparkle animation for each damage point
-    const points = event.damagePoints;
-    for (const point of points) {
-      SPARKLES.push({
-        x: point.x,
-        y: point.y,
-        alpha: 1.0,
-        size: 50
-      });
+    for (const player of PLAYERS) {
+      for (const point of event.hits[player]) {
+        SPARKLES.push({
+          x: point.x,
+          y: point.y,
+          alpha: 1.0,
+          size: 50,
+          color: (player === RED_PLAYER ? "red" : "blue")
+        });
+      }
     }
 
     // update scores
@@ -83,7 +85,11 @@ function receiveState(websocket) {
 
 function drawSparkle(context, sparkle) {
   // Draw a red circle with alpha, representing damage
-  context.strokeStyle = `rgba(255, 0, 0, ${sparkle.alpha})`; // Red with alpha
+  if (sparkle.color == 'red') {
+    context.strokeStyle = `rgba(255, 0, 0, ${sparkle.alpha})`; // Red with alpha
+  } else {
+    context.strokeStyle = `rgba(0, 0, 255, ${sparkle.alpha})`; // Blue with alpha
+  }
   context.beginPath();
   context.arc(sparkle.x, sparkle.y, sparkle.size, 0, 2 * Math.PI);
   context.stroke();

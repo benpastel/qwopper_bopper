@@ -84,7 +84,7 @@ def _add_walls(space: pymunk.Space) -> None:
         ),
     ]
     for w in walls:
-        w.friction = 0.9 # TODO floor higher
+        w.friction = 0.9  # TODO floor higher
         w.group = WALL_GROUP
         w.elasticity = 0.05
 
@@ -98,17 +98,19 @@ async def _broadcast_state(
     Send the position of each fighter to each player and the list of damage
     """
     # read & reset damage points
-    damage_points = state.damage_points_this_frame
-    state.damage_points_this_frame = set()
+    hits_this_frame = state.hits_this_frame
+    state.hits_this_frame = {player: set() for player in Player}
 
-    event: dict[str, Any] = {
+    event: dict[str, dict[str, Any]] = {}
+
+    event["positions"] = {
         player.value: fighter.position_json()
         for player, fighter in state.fighters.items()
     }
-    event["damagePoints"] = [
-        {"x": int(point.x), "y": int(point.y)} for point in damage_points
-    ]
-
+    event["hits"] = {
+        player.value: [{"x": x, "y": y} for x, y in points]
+        for player, points in hits_this_frame.items()
+    }
     event["scores"] = {player.value: state.scores[player] for player in Player}
 
     async with asyncio.TaskGroup() as tg:
@@ -147,8 +149,7 @@ def deal_damage_callback(state: State) -> Callable:
         state.scores[dealing_player] += 1
 
         for point in arbiter.contact_point_set.points:
-            state.damage_points_this_frame.add(point.point_a)
-            state.damage_points_this_frame.add(point.point_b)
+            state.hits_this_frame[dealing_player].add(point.point_a)
         return True
 
     return deal_damage
