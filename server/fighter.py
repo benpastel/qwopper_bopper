@@ -30,14 +30,14 @@ def _anchor(size: tuple[int, int], top: bool, left: bool) -> tuple[int, int]:
     w, h = size
 
     if top:
-        x_offset = JOINT_OFFSET - h // 2
+        y_offset = JOINT_OFFSET - h // 2
     else:
-        x_offset = h // 2 - JOINT_OFFSET
+        y_offset = h // 2 - JOINT_OFFSET
 
     if left:
-        y_offset = JOINT_OFFSET - w // 2
+        x_offset = JOINT_OFFSET - w // 2
     else:
-        y_offset = w // 2 - JOINT_OFFSET
+        x_offset = w // 2 - JOINT_OFFSET
 
     return x_offset, y_offset
 
@@ -53,8 +53,8 @@ def _add_joint(
     joint = pymunk.PivotJoint(
         top_body,
         bottom_body,
-        _anchor(size=top_size, top=False, left=left),
-        _anchor(size=bottom_size, top=True, left=left),
+        _anchor(size=top_size, top=False, left=left),  # top body has bottom anchor
+        _anchor(size=bottom_size, top=True, left=left),  # bottom body has top anchor
     )
     motor = pymunk.SimpleMotor(top_body, bottom_body, rate=0)
     space.add(joint, motor)
@@ -133,12 +133,12 @@ def add_fighter(
     _configure_body(torso)
     _configure_shape(torso_box, collision_type=TAKE_DAMAGE_COLLISION_TYPE)
 
-    rcalf = pymunk.Body(mass=10, moment=50000)
+    rcalf = pymunk.Body(mass=5, moment=5000)
     rcalf_box = pymunk.Poly.create_box(rcalf, size=CALF_SIZE)
     _configure_body(rcalf)
     _configure_shape(rcalf_box)
 
-    lcalf = pymunk.Body(mass=10, moment=50000)
+    lcalf = pymunk.Body(mass=5, moment=5000)
     lcalf_box = pymunk.Poly.create_box(lcalf, size=CALF_SIZE)
     _configure_body(lcalf)
     _configure_shape(lcalf_box)
