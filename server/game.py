@@ -51,25 +51,36 @@ def _apply_keypress(player: Player, state: State) -> None:
     fighter = state.fighters[player]
     keydown = state.keydowns_this_frame[player]
     state.keydowns_this_frame[player] = None  # reset the keydown
-    lmotor = fighter.lleg_motor
-    rmotor = fighter.rleg_motor
+
+    if keydown:
+        keydown = keydown.lower()
 
     # decay prexisting motor rates toward 0
-    for motor in [lmotor, rmotor]:
+    for motor in fighter.motors():
         if motor.rate > 0:
             motor.rate -= 1
         if motor.rate < 0:
             motor.rate += 1
 
-    # update based on keydown
-    if keydown and keydown.lower() == "q":
-        # open legs
-        lmotor.rate = -10
-        rmotor.rate = 10
-    elif keydown and keydown.lower() == "w":
+    # QW: open / close thighs
+    # OP: open / close calves
+    press_rate = 10
+    if keydown == "q":
+        # open thighs
+        fighter.lthigh_motor.rate = -press_rate
+        fighter.rthigh_motor.rate = press_rate
+    elif keydown == "w":
         # close legs
-        lmotor.rate = 10
-        rmotor.rate = -10
+        fighter.lthigh_motor.rate = press_rate
+        fighter.rthigh_motor.rate = -press_rate
+    elif keydown == "o":
+        # open calves
+        fighter.lcalf_motor.rate = -press_rate
+        fighter.rcalf_motor.rate = press_rate
+    elif keydown == "p":
+        # close calves
+        fighter.lcalf_motor.rate = press_rate
+        fighter.rcalf_motor.rate = -press_rate
 
 
 def _add_walls(space: pymunk.Space) -> None:

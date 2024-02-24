@@ -3,118 +3,174 @@ from typing import NamedTuple
 import pymunk  # type: ignore
 
 TORSO_SIZE = (164, 254)
-LEG_SIZE = (60, 275)
+CALF_SIZE = (60, 275)
+THIGH_SIZE = (60, 142)
 
 # how many pixels from each edge
-# are the torso & leg anchors?
-LEG_JOINT_OFFSET = 30
+# are the anchors / joints?
+JOINT_OFFSET = CALF_SIZE[0] // 2
 
 TAKE_DAMAGE_COLLISION_TYPE = 1
 DEAL_DAMAGE_COLLISION_TYPE = 2
+
+ELASTICITY = 0.05
+
+
+def _encode_position(body: pymunk.Body) -> dict[str, float]:
+    """return position + angle as a dict for sending to client"""
+    x, y = body.position
+    return {"x": x, "y": y, "angle": body.angle}
+
+
+def _anchor(size: tuple[int, int], top: bool, left: bool) -> tuple[int, int]:
+    """
+    Return the joint location in local coordinates
+    I.e. the offset from the center of the shape at which we should attach another shape
+    """
+    w, h = size
+
+    if top:
+        x_offset = JOINT_OFFSET - h // 2
+    else:
+        x_offset = h // 2 - JOINT_OFFSET
+
+    if left:
+        y_offset = JOINT_OFFSET - w // 2
+    else:
+        y_offset = w // 2 - JOINT_OFFSET
+
+    return x_offset, y_offset
+
+
+def _add_joint(
+    top_body: pymunk.Body,
+    top_size: tuple[int, int],
+    bottom_body: pymunk.Body,
+    bottom_size: tuple[int, int],
+    space: pymunk.Space,
+    left: bool,
+) -> pymunk.SimpleMotor:
+    joint = pymunk.PivotJoint(
+        top_body,
+        bottom_body,
+        _anchor(size=top_size, top=False, left=left),
+        _anchor(size=bottom_size, top=True, left=left),
+    )
+    motor = pymunk.SimpleMotor(top_body, bottom_body, rate=0)
+    space.add(joint, motor)
+    return motor
 
 
 class Fighter(NamedTuple):
     torso: pymunk.Body
     torso_box: pymunk.Poly
 
-    # right leg
-    rleg: pymunk.Body
-    rleg_box: pymunk.Poly
-    rleg_motor: pymunk.SimpleMotor
+    # right thigh
+    rthigh: pymunk.Body
+    rthigh_box: pymunk.Poly
+    rthigh_motor: pymunk.SimpleMotor
 
-    # left leg
-    lleg: pymunk.Body
-    lleg_box: pymunk.Poly
-    lleg_motor: pymunk.SimpleMotor
+    # left thigh
+    lthigh: pymunk.Body
+    lthigh_box: pymunk.Poly
+    lthigh_motor: pymunk.SimpleMotor
+
+    # right calf
+    rcalf: pymunk.Body
+    rcalf_box: pymunk.Poly
+    rcalf_motor: pymunk.SimpleMotor
+
+    # left calf
+    lcalf: pymunk.Body
+    lcalf_box: pymunk.Poly
+    lcalf_motor: pymunk.SimpleMotor
 
     def position_json(self) -> dict[str, dict[str, float]]:
         """
         Encode position in json for sending to client.
         """
-        torso_x, torso_y = self.torso.position
-        rleg_x, rleg_y = self.rleg.position
-        lleg_x, lleg_y = self.lleg.position
-
         return {
-            "torso": {"x": torso_x, "y": torso_y, "angle": self.torso.angle},
-            "rleg": {"x": rleg_x, "y": rleg_y, "angle": self.rleg.angle},
-            "lleg": {"x": lleg_x, "y": lleg_y, "angle": self.lleg.angle},
+            "torso": _encode_position(self.torso),
+            "rthigh": _encode_position(self.rthigh),
+            "lthigh": _encode_position(self.lthigh),
+            "rcalf": _encode_position(self.rcalf),
+            "lcalf": _encode_position(self.lcalf),
         }
 
     def take_damage_shapes(self) -> list[pymunk.Shape]:
         """Shapes that take damage if struck by an oppponent."""
         return [self.torso_box]
 
+    def motors(self) -> list[pymunk.SimpleMotor]:
+        return [
+            self.rthigh_motor,
+            self.lthigh_motor,
+            self.rcalf_motor,
+            self.lcalf_motor,
+        ]
+
 
 def add_fighter(
     space: pymunk.Space, group: int, starting_position: tuple[int, int]
 ) -> Fighter:
+
+    def _configure_body(body: pymunk.Body) -> None:
+        body.position = starting_position
+        body.angle = 0
+        space.add(body)
+
+    def _configure_shape(
+        poly: pymunk.Poly, collision_type: int = DEAL_DAMAGE_COLLISION_TYPE
+    ) -> None:
+        poly.group = group
+        poly.collision_type = collision_type
+        poly.elasticity = ELASTICITY
+        poly.filter = pymunk.ShapeFilter(group=group)
+        space.add(poly)
+
     torso = pymunk.Body(mass=100, moment=1000000)
-    torso.position = starting_position
-    torso.angle = 0
-
-    rleg = pymunk.Body(mass=10, moment=50000)
-    rleg.position = starting_position
-    rleg.angle = 0
-
-    lleg = pymunk.Body(mass=10, moment=50000)
-    lleg.position = starting_position
-    lleg.angle = 0
-
     torso_box = pymunk.Poly.create_box(torso, size=TORSO_SIZE)
-    torso_box.group = group
-    torso_box.elasticity = 0.05
-    torso_box.collision_type = TAKE_DAMAGE_COLLISION_TYPE
+    _configure_body(torso)
+    _configure_shape(torso_box, collision_type=TAKE_DAMAGE_COLLISION_TYPE)
 
-    rleg_box = pymunk.Poly.create_box(rleg, size=LEG_SIZE)
-    rleg_box.group = group
-    rleg_box.elasticity = 0.05
-    rleg_box.collision_type = DEAL_DAMAGE_COLLISION_TYPE
+    rcalf = pymunk.Body(mass=10, moment=50000)
+    rcalf_box = pymunk.Poly.create_box(rcalf, size=CALF_SIZE)
+    _configure_body(rcalf)
+    _configure_shape(rcalf_box)
 
-    lleg_box = pymunk.Poly.create_box(lleg, size=LEG_SIZE)
-    lleg_box.group = group
-    lleg_box.elasticity = 0.05
-    lleg_box.collision_type = DEAL_DAMAGE_COLLISION_TYPE
+    lcalf = pymunk.Body(mass=10, moment=50000)
+    lcalf_box = pymunk.Poly.create_box(lcalf, size=CALF_SIZE)
+    _configure_body(lcalf)
+    _configure_shape(lcalf_box)
 
-    torso_box.filter = pymunk.ShapeFilter(group=group)
-    rleg_box.filter = pymunk.ShapeFilter(group=group)
-    lleg_box.filter = pymunk.ShapeFilter(group=group)
+    rthigh = pymunk.Body(mass=10, moment=50000)
+    rthigh_box = pymunk.Poly.create_box(rthigh, size=THIGH_SIZE)
+    _configure_body(rthigh)
+    _configure_shape(rthigh_box)
 
-    rtorso_anchor = (
-        TORSO_SIZE[0] / 2 - LEG_JOINT_OFFSET,
-        TORSO_SIZE[1] / 2 - LEG_JOINT_OFFSET,
-    )
-    ltorso_anchor = (
-        LEG_JOINT_OFFSET - TORSO_SIZE[0] / 2,
-        TORSO_SIZE[1] / 2 - LEG_JOINT_OFFSET,
-    )
-    rleg_anchor = LEG_JOINT_OFFSET - LEG_SIZE[0] / 2, LEG_JOINT_OFFSET - LEG_SIZE[1] / 2
-    lleg_anchor = LEG_SIZE[0] / 2 - LEG_JOINT_OFFSET, LEG_JOINT_OFFSET - LEG_SIZE[1] / 2
-    rjoint = pymunk.PivotJoint(torso, rleg, rtorso_anchor, rleg_anchor)
-    ljoint = pymunk.PivotJoint(torso, lleg, ltorso_anchor, lleg_anchor)
+    lthigh = pymunk.Body(mass=10, moment=50000)
+    lthigh_box = pymunk.Poly.create_box(lthigh, size=THIGH_SIZE)
+    _configure_body(lthigh)
+    _configure_shape(lthigh_box)
 
-    rleg_motor = pymunk.SimpleMotor(torso, rleg, rate=0)
-    lleg_motor = pymunk.SimpleMotor(torso, lleg, rate=0)
+    rthigh_motor = _add_joint(torso, TORSO_SIZE, rthigh, THIGH_SIZE, space, left=False)
+    lthigh_motor = _add_joint(torso, TORSO_SIZE, lthigh, THIGH_SIZE, space, left=True)
+    rcalf_motor = _add_joint(rthigh, THIGH_SIZE, rcalf, CALF_SIZE, space, left=False)
+    lcalf_motor = _add_joint(lthigh, THIGH_SIZE, lcalf, CALF_SIZE, space, left=True)
 
-    space.add(
-        torso,
-        torso_box,
-        rleg,
-        rleg_box,
-        rleg_motor,
-        lleg,
-        lleg_box,
-        lleg_motor,
-        rjoint,
-        ljoint,
-    )
     return Fighter(
         torso,
         torso_box,
-        rleg,
-        rleg_box,
-        rleg_motor,
-        lleg,
-        lleg_box,
-        lleg_motor,
+        rthigh,
+        rthigh_box,
+        rthigh_motor,
+        lthigh,
+        lthigh_box,
+        lthigh_motor,
+        rcalf,
+        rcalf_box,
+        rcalf_motor,
+        lcalf,
+        lcalf_box,
+        lcalf_motor,
     )

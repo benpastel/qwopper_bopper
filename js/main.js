@@ -58,8 +58,10 @@ function receiveState(websocket) {
       const position = event.positions[player];
 
       drawPart(player, "torso", position.torso);
-      drawPart(player, "rleg", position.rleg);
-      drawPart(player, "lleg", position.lleg);
+      drawPart(player, "rthigh", position.rthigh);
+      drawPart(player, "lthigh", position.lthigh);
+      drawPart(player, "rcalf", position.rcalf);
+      drawPart(player, "lcalf", position.lcalf);
     }
 
     // initialize a sparkle animation for each damage point
