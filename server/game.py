@@ -86,6 +86,8 @@ def _apply_keypress(player: Player, state: State) -> None:
     elif keydown == "r":
         # close arms
         neg, pos = "larm", "rarm"
+    else:
+        return
     fighter.limbs[neg].motor.rate = -10
     fighter.limbs[pos].motor.rate = 10
 

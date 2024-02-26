@@ -85,13 +85,11 @@ def add_limb(
 ) -> Limb:
     body = pymunk.Body(mass=mass, moment=moment)
     body.angle = 0
-    space.add()
 
     box = pymunk.Poly.create_box(body, size=size)
     box.collision_type = DEAL_DAMAGE_COLLISION_TYPE
     box.elasticity = ELASTICITY
     box.friction = FRICTION
-    space.add(box)
 
     joint = pymunk.PivotJoint(
         attach_body,
@@ -118,6 +116,7 @@ def add_fighter(
     torso_box.filter = pymunk.ShapeFilter(group=group)
     torso_box.collision_type = TAKE_DAMAGE_COLLISION_TYPE
     torso_box.elasticity = ELASTICITY
+    space.add(torso, torso_box)
 
     limbs: dict[str, Limb] = {}
 

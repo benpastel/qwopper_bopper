@@ -65,7 +65,7 @@ function receiveState(websocket) {
     // draw each part of each player's fighters
     for (const player of PLAYERS) {
       for (const part of PARTS) {
-        drawPart(player, part, event.positions[player][part];
+        drawPart(player, part, event.positions[player][part]);
       }
     }
 
