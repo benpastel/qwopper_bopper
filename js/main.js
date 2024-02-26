@@ -2,6 +2,15 @@
 const BLUE_PLAYER = "blue";
 const RED_PLAYER = "red";
 const PLAYERS = [BLUE_PLAYER, RED_PLAYER];
+const PARTS = [
+    "torso",
+    "rarm",
+    "larm",
+    "rthigh",
+    "lthigh",
+    "rcalf",
+    "lcalf"
+];
 
 // list of damage sparkles we are currently displaying
 const SPARKLES = [];
@@ -55,13 +64,9 @@ function receiveState(websocket) {
 
     // draw each part of each player's fighters
     for (const player of PLAYERS) {
-      const position = event.positions[player];
-
-      drawPart(player, "torso", position.torso);
-      drawPart(player, "rthigh", position.rthigh);
-      drawPart(player, "lthigh", position.lthigh);
-      drawPart(player, "rcalf", position.rcalf);
-      drawPart(player, "lcalf", position.lcalf);
+      for (const part of PARTS) {
+        drawPart(player, part, event.positions[player][part];
+      }
     }
 
     // initialize a sparkle animation for each damage point

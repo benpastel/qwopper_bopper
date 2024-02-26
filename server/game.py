@@ -64,23 +64,30 @@ def _apply_keypress(player: Player, state: State) -> None:
 
     # QW: open / close thighs
     # OP: open / close calves
-    press_rate = 10
+    # ER: open / close arms
+    #
+    # negative motor rate means clockwise rotation
+    # positive motor rate means counterclockwise rotation
     if keydown == "q":
         # open thighs
-        fighter.lthigh_motor.rate = -press_rate
-        fighter.rthigh_motor.rate = press_rate
+        neg, pos = "lthigh", "rthigh"
     elif keydown == "w":
-        # close legs
-        fighter.lthigh_motor.rate = press_rate
-        fighter.rthigh_motor.rate = -press_rate
+        # close thighs
+        neg, pos = "rthigh", "lthigh"
     elif keydown == "o":
         # open calves
-        fighter.lcalf_motor.rate = -press_rate
-        fighter.rcalf_motor.rate = press_rate
+        neg, pos = "lcalf", "rcalf"
     elif keydown == "p":
         # close calves
-        fighter.lcalf_motor.rate = press_rate
-        fighter.rcalf_motor.rate = -press_rate
+        neg, pos = "rcalf", "lcalf"
+    elif keydown == "e":
+        # open arms
+        neg, pos = "rarm", "larm"
+    elif keydown == "r":
+        # close arms
+        neg, pos = "larm", "rarm"
+    fighter.limbs[neg].motor.rate = -10
+    fighter.limbs[pos].motor.rate = 10
 
 
 def _add_walls(space: pymunk.Space) -> None:
@@ -95,7 +102,7 @@ def _add_walls(space: pymunk.Space) -> None:
         ),
     ]
     for w in walls:
-        w.friction = 0.9  # TODO floor higher
+        w.friction = 0.9
         w.group = WALL_GROUP
         w.elasticity = 0.05
 
