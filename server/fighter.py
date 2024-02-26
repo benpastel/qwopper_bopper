@@ -5,7 +5,7 @@ import pymunk  # type: ignore
 TORSO_SIZE = (164, 254)
 CALF_SIZE = (60, 275)
 THIGH_SIZE = (60, 142)
-ARM_SIZE = (60, 350)
+ARM_SIZE = (60, 275)
 
 # how many pixels from each edge
 # are the anchors / joints?
