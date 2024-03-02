@@ -100,8 +100,8 @@ def add_limb(
     )
 
     rest_angle = pi * 15 / 8 if is_left else pi * 17 / 8
-    stiffness = 100000000
-    damping = 1000000
+    stiffness = 10000000
+    damping = 1000
     if is_above:
         motor = pymunk.DampedRotarySpring(
             body, attach_body, rest_angle, stiffness=stiffness, damping=damping

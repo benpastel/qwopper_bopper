@@ -89,10 +89,8 @@ def _apply_keypress(player: Player, state: State) -> None:
     else:
         return
 
-    fighter.limbs[pos].body.apply_torque(-10)
-    fighter.limbs[neg].body.apply_torque(10)
-    # fighter.limbs[neg].motor.rate = -10
-    # fighter.limbs[pos].motor.rate = 10
+    fighter.limbs[pos].body.apply_impulse_at_local_point((-10000, 10000), (0, 0))
+    fighter.limbs[neg].body.apply_impulse_at_local_point((10000, -10000), (0, 0))
 
 
 def _add_walls(space: pymunk.Space) -> None:
