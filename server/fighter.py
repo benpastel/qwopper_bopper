@@ -18,6 +18,12 @@ DEAL_DAMAGE_COLLISION_TYPE = 2
 ELASTICITY = 0.05
 FRICTION = 0.9
 
+LIMB_MASS = 10
+LIMB_MOMENT = LIMB_MASS**4
+
+JOINT_STIFFNESS = 10000000
+JOINT_DAMPING = 1000
+
 
 def _encode_position(body: pymunk.Body) -> dict[str, float]:
     """return position + angle as a dict for sending to client"""
@@ -99,16 +105,15 @@ def add_limb(
         _anchor(size=size, top=(not is_above), left=is_left),
     )
 
+    # TODO set for each limb (so arms are down)
     rest_angle = pi * 15 / 8 if is_left else pi * 17 / 8
-    stiffness = 10000000
-    damping = 1000
     if is_above:
         motor = pymunk.DampedRotarySpring(
-            body, attach_body, rest_angle, stiffness=stiffness, damping=damping
+            body, attach_body, rest_angle, JOINT_STIFFNESS, JOINT_DAMPING
         )
     else:
         motor = pymunk.DampedRotarySpring(
-            attach_body, body, rest_angle, stiffness=stiffness, damping=damping
+            attach_body, body, rest_angle, JOINT_STIFFNESS, JOINT_DAMPING
         )
     space.add(body, box, joint, motor)
     return Limb(body, box, motor)
@@ -117,7 +122,7 @@ def add_limb(
 def add_fighter(
     space: pymunk.Space, group: int, start_position: tuple[int, int]
 ) -> Fighter:
-    torso = pymunk.Body(mass=100, moment=1000000)
+    torso = pymunk.Body(mass=LIMB_MASS, moment=LIMB_MOMENT)
     torso.position = start_position
 
     torso_box = pymunk.Poly.create_box(torso, size=TORSO_SIZE)
@@ -134,8 +139,8 @@ def add_fighter(
         prefix = "l" if is_left else "r"
 
         limbs[f"{prefix}arm"] = add_limb(
-            mass=5,
-            moment=5000,
+            mass=LIMB_MASS,
+            moment=LIMB_MOMENT,
             size=ARM_SIZE,
             attach_body=torso,
             attach_size=TORSO_SIZE,
@@ -145,8 +150,8 @@ def add_fighter(
         )
 
         limbs[f"{prefix}thigh"] = thigh = add_limb(
-            mass=10,
-            moment=50000,
+            mass=LIMB_MASS,
+            moment=LIMB_MOMENT,
             size=THIGH_SIZE,
             attach_body=torso,
             attach_size=TORSO_SIZE,
@@ -156,8 +161,8 @@ def add_fighter(
         )
 
         limbs[f"{prefix}calf"] = add_limb(
-            mass=5,
-            moment=5000,
+            mass=LIMB_MASS,
+            moment=LIMB_MOMENT,
             size=CALF_SIZE,
             attach_body=thigh.body,
             attach_size=THIGH_SIZE,

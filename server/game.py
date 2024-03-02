@@ -18,7 +18,7 @@ from server.state import State, Player, other_player
 WIDTH = 1600
 HEIGHT = 800
 FPS = 60
-IMPULSE = 1000
+IMPULSE = 10000
 GRAVITY = 1000
 STEPS_PER_FRAME = 10
 
@@ -55,19 +55,13 @@ def _apply_keypress(player: Player, state: State) -> None:
     if keydown:
         keydown = keydown.lower()
 
-    # decay prexisting motor rates toward 0
-    # for motor in fighter.motors():
-    #     if motor.rate > 0:
-    #         motor.rate -= 1
-    #     if motor.rate < 0:
-    #         motor.rate += 1
-
     # QW: open / close thighs
     # OP: open / close calves
     # ER: open / close arms
     #
-    # negative motor rate means clockwise rotation
-    # positive motor rate means counterclockwise rotation
+    # in local coordinate to the limb:
+    # negative x impulse causes counterclockwise rotation
+    # positive x impulse causes clockwise rotation
     if keydown == "q":
         # open thighs
         neg, pos = "lthigh", "rthigh"
@@ -89,8 +83,8 @@ def _apply_keypress(player: Player, state: State) -> None:
     else:
         return
 
-    fighter.limbs[pos].body.apply_impulse_at_local_point((-10000, 10000), (0, 0))
-    fighter.limbs[neg].body.apply_impulse_at_local_point((10000, -10000), (0, 0))
+    fighter.limbs[neg].body.apply_impulse_at_local_point((-IMPULSE, 0), (0, 0))
+    fighter.limbs[pos].body.apply_impulse_at_local_point((IMPULSE, 0), (0, 0))
 
 
 def _add_walls(space: pymunk.Space) -> None:
