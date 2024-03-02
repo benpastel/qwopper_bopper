@@ -1,4 +1,5 @@
 from typing import NamedTuple
+from math import pi
 
 import pymunk  # type: ignore
 
@@ -97,10 +98,18 @@ def add_limb(
         _anchor(size=attach_size, top=is_above, left=is_left),
         _anchor(size=size, top=(not is_above), left=is_left),
     )
+
+    rest_angle = pi * 15 / 8 if is_left else pi * 17 / 8
+    stiffness = 100000000
+    damping = 1000000
     if is_above:
-        motor = pymunk.DampedRotarySpring(body, attach_body, rest_angle=0, stiffness=10000, damping=1000)
+        motor = pymunk.DampedRotarySpring(
+            body, attach_body, rest_angle, stiffness=stiffness, damping=damping
+        )
     else:
-        motor = pymunk.DampedRotarySpring(attach_body, body, rest_angle=0, stiffness=10000, damping=1000)
+        motor = pymunk.DampedRotarySpring(
+            attach_body, body, rest_angle, stiffness=stiffness, damping=damping
+        )
     space.add(body, box, joint, motor)
     return Limb(body, box, motor)
 

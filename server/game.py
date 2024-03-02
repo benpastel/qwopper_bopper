@@ -56,11 +56,11 @@ def _apply_keypress(player: Player, state: State) -> None:
         keydown = keydown.lower()
 
     # decay prexisting motor rates toward 0
-    for motor in fighter.motors():
-        if motor.rate > 0:
-            motor.rate -= 1
-        if motor.rate < 0:
-            motor.rate += 1
+    # for motor in fighter.motors():
+    #     if motor.rate > 0:
+    #         motor.rate -= 1
+    #     if motor.rate < 0:
+    #         motor.rate += 1
 
     # QW: open / close thighs
     # OP: open / close calves
@@ -88,8 +88,11 @@ def _apply_keypress(player: Player, state: State) -> None:
         neg, pos = "larm", "rarm"
     else:
         return
-    fighter.limbs[neg].motor.rate = -10
-    fighter.limbs[pos].motor.rate = 10
+
+    fighter.limbs[pos].body.apply_torque(-10)
+    fighter.limbs[neg].body.apply_torque(10)
+    # fighter.limbs[neg].motor.rate = -10
+    # fighter.limbs[pos].motor.rate = 10
 
 
 def _add_walls(space: pymunk.Space) -> None:
