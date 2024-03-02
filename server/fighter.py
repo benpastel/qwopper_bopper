@@ -98,9 +98,9 @@ def add_limb(
         _anchor(size=size, top=(not is_above), left=is_left),
     )
     if is_above:
-        motor = pymunk.SimpleMotor(body, attach_body, rate=0)
+        motor = pymunk.DampedRotarySpring(body, attach_body, rest_angle=0, stiffness=10000, damping=1000)
     else:
-        motor = pymunk.SimpleMotor(attach_body, body, rate=0)
+        motor = pymunk.DampedRotarySpring(attach_body, body, rest_angle=0, stiffness=10000, damping=1000)
     space.add(body, box, joint, motor)
     return Limb(body, box, motor)
 
