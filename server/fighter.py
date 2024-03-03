@@ -27,7 +27,11 @@ JOINT_DAMPING = 1000
 
 # angle of right limb relative to whatever it's attached to
 # left limb angles are calculated via reflection
-LIMB_REFERENCE_ANGLES = {"thigh": pi / 8, "calf": pi / 8, "arm": pi / 2}
+#          /
+#         /  this angle
+#        /
+# ======* - - - -
+LIMB_REFERENCE_ANGLES = {"thigh": pi / 4, "calf": -pi / 8, "arm": pi * 3 / 4}
 
 
 def _encode_position(body: pymunk.Body) -> dict[str, float]:
