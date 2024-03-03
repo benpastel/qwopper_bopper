@@ -25,6 +25,10 @@ LIMB_MOMENT = LIMB_MASS**4
 JOINT_STIFFNESS = 10000000
 JOINT_DAMPING = 1000
 
+# angle of right limb relative to whatever it's attached to
+# left limb angles are calculated via reflection
+LIMB_REFERENCE_ANGLES = {"thigh": pi / 8, "calf": pi / 8, "arm": pi / 8}
+
 
 def _encode_position(body: pymunk.Body) -> dict[str, float]:
     """return position + angle as a dict for sending to client"""
@@ -86,6 +90,7 @@ def add_limb(
     attach_size: tuple[int, int],
     is_above: bool,
     is_left: bool,
+    reference_angle: float,
     space: pymunk.Space,
 ) -> Limb:
     body = pymunk.Body(mass=mass, moment=moment)
@@ -103,8 +108,7 @@ def add_limb(
         _anchor(size=size, top=(not is_above), left=is_left),
     )
 
-    # TODO set for each limb (so arms are down)
-    rest_angle = pi * 15 / 8 if is_left else pi * 17 / 8
+    rest_angle = -reference_angle if is_left else reference_angle
     if is_above:
         spring = pymunk.DampedRotarySpring(
             body, attach_body, rest_angle, JOINT_STIFFNESS, JOINT_DAMPING
@@ -165,6 +169,7 @@ def add_fighter(
             attach_size=TORSO_SIZE,
             is_above=True,
             is_left=is_left,
+            reference_angle=LIMB_REFERENCE_ANGLES["arm"],
             space=space,
         )
 
@@ -176,6 +181,7 @@ def add_fighter(
             attach_size=TORSO_SIZE,
             is_above=False,
             is_left=is_left,
+            reference_angle=LIMB_REFERENCE_ANGLES["thigh"],
             space=space,
         )
 
@@ -187,6 +193,7 @@ def add_fighter(
             attach_size=THIGH_SIZE,
             is_above=False,
             is_left=is_left,
+            reference_angle=LIMB_REFERENCE_ANGLES["calf"],
             space=space,
         )
 
