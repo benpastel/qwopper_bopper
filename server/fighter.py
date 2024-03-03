@@ -133,7 +133,7 @@ def add_fighter(
     head = pymunk.Body(mass=LIMB_MASS, moment=LIMB_MOMENT)
     head.position = start_position
 
-    head_box = pymunk.Poly.create_box(head, size=TORSO_SIZE)
+    head_box = pymunk.Poly.create_box(head, size=HEAD_SIZE)
     head_box.group = group
     head_box.filter = pymunk.ShapeFilter(group=group)
     head_box.collision_type = TAKE_DAMAGE_COLLISION_TYPE
