@@ -211,7 +211,7 @@ async def play_game(websockets: dict[Player, WebSocketServerProtocol]) -> None:
         await asyncio.sleep(next_frame - time())
         last_frame = next_frame
 
-        # update each player's motors based on their keypressed
+        # update each player's fighters based on their keypressed
         for player in Player:
             _apply_keypress(player, state)
 

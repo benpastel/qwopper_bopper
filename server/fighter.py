@@ -27,7 +27,7 @@ JOINT_DAMPING = 1000
 
 # angle of right limb relative to whatever it's attached to
 # left limb angles are calculated via reflection
-LIMB_REFERENCE_ANGLES = {"thigh": pi / 8, "calf": pi / 8, "arm": pi / 8}
+LIMB_REFERENCE_ANGLES = {"thigh": pi / 8, "calf": pi / 8, "arm": pi / 2}
 
 
 def _encode_position(body: pymunk.Body) -> dict[str, float]:
@@ -79,7 +79,10 @@ class Fighter(NamedTuple):
 
     def take_damage_shapes(self) -> list[pymunk.Shape]:
         """Shapes that take damage if struck by an oppponent."""
-        return [self.torso_box]
+        return [
+            self.torso_box,
+            self.limbs["head"].box,
+        ]
 
 
 def add_limb(
