@@ -9,7 +9,8 @@ const PARTS = [
     "rthigh",
     "lthigh",
     "rcalf",
-    "lcalf"
+    "lcalf",
+    "head",
 ];
 
 // list of damage sparkles we are currently displaying

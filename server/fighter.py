@@ -7,6 +7,7 @@ TORSO_SIZE = (164, 254)
 CALF_SIZE = (60, 275)
 THIGH_SIZE = (60, 142)
 ARM_SIZE = (60, 275)
+HEAD_SIZE = (80, 153)
 
 # how many pixels from each edge
 # are the anchors / joints?
@@ -54,7 +55,7 @@ def _anchor(size: tuple[int, int], top: bool, left: bool) -> tuple[int, int]:
 class Limb(NamedTuple):
     body: pymunk.Body
     box: pymunk.Poly
-    motor: pymunk.SimpleMotor
+    spring: pymunk.DampedRotarySpring
 
 
 class Fighter(NamedTuple):
@@ -75,9 +76,6 @@ class Fighter(NamedTuple):
     def take_damage_shapes(self) -> list[pymunk.Shape]:
         """Shapes that take damage if struck by an oppponent."""
         return [self.torso_box]
-
-    def motors(self) -> list[pymunk.SimpleMotor]:
-        return [limb.motor for limb in self.limbs.values()]
 
 
 def add_limb(
@@ -108,15 +106,15 @@ def add_limb(
     # TODO set for each limb (so arms are down)
     rest_angle = pi * 15 / 8 if is_left else pi * 17 / 8
     if is_above:
-        motor = pymunk.DampedRotarySpring(
+        spring = pymunk.DampedRotarySpring(
             body, attach_body, rest_angle, JOINT_STIFFNESS, JOINT_DAMPING
         )
     else:
-        motor = pymunk.DampedRotarySpring(
+        spring = pymunk.DampedRotarySpring(
             attach_body, body, rest_angle, JOINT_STIFFNESS, JOINT_DAMPING
         )
-    space.add(body, box, joint, motor)
-    return Limb(body, box, motor)
+    space.add(body, box, joint, spring)
+    return Limb(body, box, spring)
 
 
 def add_fighter(
@@ -132,9 +130,30 @@ def add_fighter(
     torso_box.elasticity = ELASTICITY
     space.add(torso, torso_box)
 
-    limbs: dict[str, Limb] = {}
+    head = pymunk.Body(mass=LIMB_MASS, moment=LIMB_MOMENT)
+    head.position = start_position
 
-    # all limbs have a right and left
+    head_box = pymunk.Poly.create_box(head, size=TORSO_SIZE)
+    head_box.group = group
+    head_box.filter = pymunk.ShapeFilter(group=group)
+    head_box.collision_type = TAKE_DAMAGE_COLLISION_TYPE
+    head_box.elasticity = ELASTICITY
+    space.add(head, head_box)
+
+    # attach bottom of head to top of torso
+    head_anchor = (0, HEAD_SIZE[1] // 2 - JOINT_OFFSET)
+    torso_anchor = (0, JOINT_OFFSET - TORSO_SIZE[1] // 2)
+    joint = pymunk.PivotJoint(
+        head,
+        torso,
+        head_anchor,
+        torso_anchor,
+    )
+    spring = pymunk.DampedRotarySpring(head, torso, 0, JOINT_STIFFNESS, JOINT_DAMPING)
+    space.add(joint, spring)
+    limbs = {"head": Limb(head, head_box, spring)}
+
+    # add left & right of all limbs
     for is_left in [False, True]:
         prefix = "l" if is_left else "r"
 
