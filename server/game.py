@@ -155,16 +155,27 @@ def deal_damage_callback(state: State) -> Callable:
 
         # figure out which player took the damage
         receiving_player: Player | None = None
+        a_is_hit: bool | None = None
         for player, fighter in state.fighters.items():
             if shape_a in fighter.take_damage_shapes():
                 receiving_player = player
-        assert receiving_player
+                a_is_hit = True
+            elif shape_b in fighter.take_damage_shapes():
+                receiving_player = player
+                a_is_hit = False
+
+        if not receiving_player:
+            # nobody was hit
+            return True
+
+        assert a_is_hit is not None
         dealing_player = other_player(receiving_player)
 
         state.scores[dealing_player] += 1
 
         for point in arbiter.contact_point_set.points:
-            state.hits_this_frame[dealing_player].add(point.point_a)
+            hit_point = point.point_a if a_is_hit else point.point_b
+            state.hits_this_frame[dealing_player].add(hit_point)
         return True
 
     return deal_damage
