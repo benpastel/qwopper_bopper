@@ -2,6 +2,7 @@ from time import time
 import json
 from websockets.server import WebSocketServerProtocol
 from typing import Any, Callable
+import random
 
 import asyncio
 
@@ -11,6 +12,7 @@ from server.fighter import (
     add_fighter,
     TAKE_DAMAGE_COLLISION_TYPE,
     DEAL_DAMAGE_COLLISION_TYPE,
+    Fighter,
 )
 from server.state import State, Player, other_player
 
@@ -25,6 +27,8 @@ STEPS_PER_FRAME = 10
 WALL_GROUP = 1
 RED_GROUP = 2
 BLUE_GROUP = 3
+
+DETACH_LIMB_SCORE = 500
 
 
 async def _listen_for_keydown(
@@ -83,8 +87,14 @@ def _apply_keypress(player: Player, state: State) -> None:
     else:
         return
 
-    fighter.limbs[neg].body.apply_impulse_at_local_point((-IMPULSE, 0), (0, 0))
-    fighter.limbs[pos].body.apply_impulse_at_local_point((IMPULSE, 0), (0, 0))
+    neg_limb = fighter.limbs[neg]
+    pos_limb = fighter.limbs[pos]
+
+    # apply impulses if the limb is still attached via joint
+    if neg_limb.joint:
+        neg_limb.body.apply_impulse_at_local_point((-IMPULSE, 0), (0, 0))
+    if pos_limb.joint:
+        pos_limb.body.apply_impulse_at_local_point((IMPULSE, 0), (0, 0))
 
 
 def _add_walls(space: pymunk.Space) -> None:
@@ -144,6 +154,30 @@ def _keydown_exception_handler(task: asyncio.Task) -> None:
         pass
 
 
+def _detach_limb(fighter: Fighter, space: pymunk.Space) -> None:
+    """
+    Detach a random limb from player's torso
+    by removing joint.
+
+    Head last.
+    """
+
+    head = fighter.limbs["head"]
+    other_candidates = [
+        limb for limb in fighter.limbs.values() if limb != head and limb.joint
+    ]
+    if other_candidates:
+        target = random.choice(other_candidates)
+    elif head.joint:
+        target = head
+    else:
+        # all limbs already removed
+        return
+    space.remove(target.joint, target.spring)
+    target.joint = None
+    target.spring = None
+
+
 def deal_damage_callback(state: State) -> Callable:
     """
     Returns a function for dealing damage to one player, with
@@ -172,6 +206,9 @@ def deal_damage_callback(state: State) -> Callable:
         dealing_player = other_player(receiving_player)
 
         state.scores[dealing_player] += 1
+        if (state.scores[dealing_player] % DETACH_LIMB_SCORE) == 0:
+            receiving_fighter = state.fighters[receiving_player]
+            _detach_limb(receiving_fighter, space)
 
         for point in arbiter.contact_point_set.points:
             hit_point = point.point_a if a_is_hit else point.point_b

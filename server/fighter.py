@@ -1,5 +1,6 @@
 from typing import NamedTuple
 from math import pi
+from dataclasses import dataclass
 
 import pymunk  # type: ignore
 
@@ -60,10 +61,15 @@ def _anchor(size: tuple[int, int], top: bool, left: bool) -> tuple[int, int]:
     return x_offset, y_offset
 
 
-class Limb(NamedTuple):
+@dataclass
+class Limb:
     body: pymunk.Body
     box: pymunk.Poly
-    spring: pymunk.DampedRotarySpring
+
+    # the torso-side joint & spring connecting this limb to something else
+    # None if the joint & spring have been removed because the limb fell off
+    joint: pymunk.PivotJoint | None
+    spring: pymunk.DampedRotarySpring | None
 
 
 class Fighter(NamedTuple):
@@ -125,7 +131,7 @@ def add_limb(
             attach_body, body, rest_angle, JOINT_STIFFNESS, JOINT_DAMPING
         )
     space.add(body, box, joint, spring)
-    return Limb(body, box, spring)
+    return Limb(body, box, joint, spring)
 
 
 def add_fighter(
@@ -162,7 +168,7 @@ def add_fighter(
     )
     spring = pymunk.DampedRotarySpring(head, torso, 0, JOINT_STIFFNESS, JOINT_DAMPING)
     space.add(joint, spring)
-    limbs = {"head": Limb(head, head_box, spring)}
+    limbs = {"head": Limb(head, head_box, joint, spring)}
 
     # add left & right of all limbs
     for is_left in [False, True]:
