@@ -20,11 +20,11 @@ DEAL_DAMAGE_COLLISION_TYPE = 2
 ELASTICITY = 0.05
 FRICTION = 0.9
 
-LIMB_MASS = 10
+LIMB_MASS = 20
 LIMB_MOMENT = LIMB_MASS**4
 
-JOINT_STIFFNESS = 10000000
-JOINT_DAMPING = 1000
+JOINT_STIFFNESS = 1e7
+JOINT_DAMPING = 1e3
 
 # angle of right limb relative to whatever it's attached to
 # left limb angles are calculated via reflection

@@ -28,7 +28,7 @@ WALL_GROUP = 1
 RED_GROUP = 2
 BLUE_GROUP = 3
 
-DETACH_LIMB_SCORE = 500
+DETACH_LIMB_SCORE = 1000
 
 
 async def _listen_for_keydown(
