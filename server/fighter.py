@@ -20,7 +20,7 @@ DEAL_DAMAGE_COLLISION_TYPE = 2
 ELASTICITY = 0.05
 FRICTION = 0.9
 
-LIMB_MASS = 20
+LIMB_MASS = 10  # TODO: double after better starting positions
 LIMB_MOMENT = LIMB_MASS**4
 
 JOINT_STIFFNESS = 1e7
@@ -33,6 +33,8 @@ JOINT_DAMPING = 1e3
 #        /
 # ======* - - - -
 LIMB_REFERENCE_ANGLES = {"thigh": pi / 4, "calf": -pi / 8, "arm": pi * 3 / 4}
+LIMB_MIN_ANGLES = {"thigh": 0, "calf": -pi, "arm": 0}
+LIMB_MAX_ANGLES = {"thigh": pi / 2, "calf": 0, "arm": pi * 5 / 4}
 
 
 def _encode_position(body: pymunk.Body) -> dict[str, float]:
@@ -104,8 +106,12 @@ def add_limb(
     is_above: bool,
     is_left: bool,
     reference_angle: float,
+    min_angle: float,
+    max_angle: float,
     space: pymunk.Space,
 ) -> Limb:
+    assert min_angle <= reference_angle <= max_angle
+
     body = pymunk.Body(mass=mass, moment=moment)
     body.angle = 0
 
@@ -130,7 +136,10 @@ def add_limb(
         spring = pymunk.DampedRotarySpring(
             attach_body, body, rest_angle, JOINT_STIFFNESS, JOINT_DAMPING
         )
-    space.add(body, box, joint, spring)
+
+    rotary_limit = pymunk.RotaryLimitJoint(attach_body, body, min_angle, max_angle)
+
+    space.add(body, box, joint, spring, rotary_limit)
     return Limb(body, box, joint, spring)
 
 
@@ -183,6 +192,8 @@ def add_fighter(
             is_above=True,
             is_left=is_left,
             reference_angle=LIMB_REFERENCE_ANGLES["arm"],
+            min_angle=LIMB_MIN_ANGLES["arm"],
+            max_angle=LIMB_MAX_ANGLES["arm"],
             space=space,
         )
 
@@ -195,6 +206,8 @@ def add_fighter(
             is_above=False,
             is_left=is_left,
             reference_angle=LIMB_REFERENCE_ANGLES["thigh"],
+            min_angle=LIMB_MIN_ANGLES["thigh"],
+            max_angle=LIMB_MAX_ANGLES["thigh"],
             space=space,
         )
 
@@ -207,6 +220,8 @@ def add_fighter(
             is_above=False,
             is_left=is_left,
             reference_angle=LIMB_REFERENCE_ANGLES["calf"],
+            min_angle=LIMB_MIN_ANGLES["calf"],
+            max_angle=LIMB_MAX_ANGLES["calf"],
             space=space,
         )
 
