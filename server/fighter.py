@@ -106,11 +106,11 @@ def add_limb(
     is_above: bool,
     is_left: bool,
     reference_angle: float,
-    min_angle: float,
-    max_angle: float,
+    reference_min_angle: float,
+    reference_max_angle: float,
     space: pymunk.Space,
 ) -> Limb:
-    assert min_angle <= reference_angle <= max_angle
+    assert reference_min_angle <= reference_angle <= reference_max_angle
 
     body = pymunk.Body(mass=mass, moment=moment)
     body.angle = 0
@@ -135,6 +135,12 @@ def add_limb(
     )
 
     rest_angle = -reference_angle if is_left else reference_angle
+    min_angle = -reference_min_angle if is_left else reference_min_angle
+    max_angle = -reference_max_angle if is_left else reference_max_angle
+    if min_angle > max_angle:
+        min_angle, max_angle = max_angle, min_angle
+    # TODO still broken, not sure why
+
     if is_above:
         spring = pymunk.DampedRotarySpring(
             body, attach_body, rest_angle, JOINT_STIFFNESS, JOINT_DAMPING
@@ -202,8 +208,8 @@ def add_fighter(
             is_above=True,
             is_left=is_left,
             reference_angle=LIMB_REFERENCE_ANGLES["arm"],
-            min_angle=LIMB_MIN_ANGLES["arm"],
-            max_angle=LIMB_MAX_ANGLES["arm"],
+            reference_min_angle=LIMB_MIN_ANGLES["arm"],
+            reference_max_angle=LIMB_MAX_ANGLES["arm"],
             space=space,
         )
 
@@ -216,8 +222,8 @@ def add_fighter(
             is_above=False,
             is_left=is_left,
             reference_angle=LIMB_REFERENCE_ANGLES["thigh"],
-            min_angle=LIMB_MIN_ANGLES["thigh"],
-            max_angle=LIMB_MAX_ANGLES["thigh"],
+            reference_min_angle=LIMB_MIN_ANGLES["thigh"],
+            reference_max_angle=LIMB_MAX_ANGLES["thigh"],
             space=space,
         )
 
@@ -230,8 +236,8 @@ def add_fighter(
             is_above=False,
             is_left=is_left,
             reference_angle=LIMB_REFERENCE_ANGLES["calf"],
-            min_angle=LIMB_MIN_ANGLES["calf"],
-            max_angle=LIMB_MAX_ANGLES["calf"],
+            reference_min_angle=LIMB_MIN_ANGLES["calf"],
+            reference_max_angle=LIMB_MAX_ANGLES["calf"],
             space=space,
         )
 

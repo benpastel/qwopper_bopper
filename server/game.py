@@ -159,20 +159,33 @@ def _detach_limb(fighter: Fighter, space: pymunk.Space) -> None:
     Detach a random limb from player's torso
     by removing joint.
 
-    Head last.
+    First arms or calves, then thighs, then head.
     """
 
-    head = fighter.limbs["head"]
-    other_candidates = [
-        limb for limb in fighter.limbs.values() if limb != head and limb.joint
+    first_names = ["larm", "rarm", "lcalf", "rcalf"]
+    second_names = ["lthigh", "rthigh"]
+    third_names = ["head"]
+
+    first_candidates = [
+        fighter.limbs[name] for name in first_names if fighter.limbs[name].joint
     ]
-    if other_candidates:
-        target = random.choice(other_candidates)
-    elif head.joint:
-        target = head
+    second_candidates = [
+        fighter.limbs[name] for name in second_names if fighter.limbs[name].joint
+    ]
+    third_candidates = [
+        fighter.limbs[name] for name in third_names if fighter.limbs[name].joint
+    ]
+
+    if first_candidates:
+        target = random.choice(first_candidates)
+    elif second_candidates:
+        target = random.choice(second_candidates)
+    elif third_candidates:
+        target = random.choice(third_candidates)
     else:
         # all limbs already removed
         return
+
     space.remove(target.joint, target.spring)
     target.joint = None
     target.spring = None
@@ -234,8 +247,8 @@ async def play_game(websockets: dict[Player, WebSocketServerProtocol]) -> None:
     space.add_default_collision_handler()
     _add_walls(space)
 
-    state.fighters[Player.RED] = add_fighter(space, RED_GROUP, (200, 200))
-    state.fighters[Player.BLUE] = add_fighter(space, BLUE_GROUP, (WIDTH - 200, 200))
+    state.fighters[Player.RED] = add_fighter(space, RED_GROUP, (200, 400))
+    state.fighters[Player.BLUE] = add_fighter(space, BLUE_GROUP, (WIDTH - 200, 400))
     damage_handler = space.add_collision_handler(
         TAKE_DAMAGE_COLLISION_TYPE, DEAL_DAMAGE_COLLISION_TYPE
     )
