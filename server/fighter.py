@@ -20,7 +20,7 @@ DEAL_DAMAGE_COLLISION_TYPE = 2
 ELASTICITY = 0.05
 FRICTION = 0.9
 
-LIMB_MASS = 10  # TODO: double after better starting positions
+LIMB_MASS = 20
 LIMB_MOMENT = LIMB_MASS**4
 
 JOINT_STIFFNESS = 1e7
@@ -106,11 +106,10 @@ def add_limb(
     is_above: bool,
     is_left: bool,
     reference_angle: float,
-    reference_min_angle: float,
-    reference_max_angle: float,
+    reference_min_angle: float | None,
+    reference_max_angle: float | None,
     space: pymunk.Space,
 ) -> Limb:
-    assert reference_min_angle <= reference_angle <= reference_max_angle
 
     body = pymunk.Body(mass=mass, moment=moment)
     body.angle = 0
@@ -135,11 +134,6 @@ def add_limb(
     )
 
     rest_angle = -reference_angle if is_left else reference_angle
-    min_angle = -reference_min_angle if is_left else reference_min_angle
-    max_angle = -reference_max_angle if is_left else reference_max_angle
-    if min_angle > max_angle:
-        min_angle, max_angle = max_angle, min_angle
-    # TODO still broken, not sure why
 
     if is_above:
         spring = pymunk.DampedRotarySpring(
@@ -150,9 +144,14 @@ def add_limb(
             attach_body, body, rest_angle, JOINT_STIFFNESS, JOINT_DAMPING
         )
 
-    rotary_limit = pymunk.RotaryLimitJoint(attach_body, body, min_angle, max_angle)
+    space.add(body, box, joint, spring)
 
-    space.add(body, box, joint, spring, rotary_limit)
+    if reference_min_angle and reference_max_angle:
+        min_angle = -reference_min_angle if is_left else reference_min_angle
+        max_angle = -reference_max_angle if is_left else reference_max_angle
+        rotary_limit = pymunk.RotaryLimitJoint(attach_body, body, min_angle, max_angle)
+        space.add(rotary_limit)
+
     return Limb(body, box, joint, spring)
 
 
@@ -208,8 +207,8 @@ def add_fighter(
             is_above=True,
             is_left=is_left,
             reference_angle=LIMB_REFERENCE_ANGLES["arm"],
-            reference_min_angle=LIMB_MIN_ANGLES["arm"],
-            reference_max_angle=LIMB_MAX_ANGLES["arm"],
+            reference_min_angle=None,
+            reference_max_angle=None,
             space=space,
         )
 
@@ -236,8 +235,8 @@ def add_fighter(
             is_above=False,
             is_left=is_left,
             reference_angle=LIMB_REFERENCE_ANGLES["calf"],
-            reference_min_angle=LIMB_MIN_ANGLES["calf"],
-            reference_max_angle=LIMB_MAX_ANGLES["calf"],
+            reference_min_angle=None,
+            reference_max_angle=None,
             space=space,
         )
 
