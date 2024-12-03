@@ -106,8 +106,8 @@ def add_limb(
     is_above: bool,
     is_left: bool,
     reference_angle: float,
-    reference_min_angle: float | None,
-    reference_max_angle: float | None,
+    reference_min_angle: float,
+    reference_max_angle: float,
     space: pymunk.Space,
 ) -> Limb:
 
@@ -134,23 +134,22 @@ def add_limb(
     )
 
     rest_angle = -reference_angle if is_left else reference_angle
+    min_angle = -reference_min_angle if is_left else reference_min_angle
+    max_angle = -reference_max_angle if is_left else reference_max_angle
 
     if is_above:
         spring = pymunk.DampedRotarySpring(
             body, attach_body, rest_angle, JOINT_STIFFNESS, JOINT_DAMPING
         )
+        # rotary_limit = pymunk.RotaryLimitJoint(body, attach_body, min_angle, max_angle)
+        # TODO: arms case limits aren't working yet
     else:
         spring = pymunk.DampedRotarySpring(
             attach_body, body, rest_angle, JOINT_STIFFNESS, JOINT_DAMPING
         )
-
-    space.add(body, box, joint, spring)
-
-    if reference_min_angle and reference_max_angle:
-        min_angle = -reference_min_angle if is_left else reference_min_angle
-        max_angle = -reference_max_angle if is_left else reference_max_angle
         rotary_limit = pymunk.RotaryLimitJoint(attach_body, body, min_angle, max_angle)
         space.add(rotary_limit)
+    space.add(body, box, joint, spring)
 
     return Limb(body, box, joint, spring)
 
@@ -207,8 +206,8 @@ def add_fighter(
             is_above=True,
             is_left=is_left,
             reference_angle=LIMB_REFERENCE_ANGLES["arm"],
-            reference_min_angle=None,
-            reference_max_angle=None,
+            reference_min_angle=LIMB_REFERENCE_ANGLES["arm"],
+            reference_max_angle=LIMB_REFERENCE_ANGLES["arm"],
             space=space,
         )
 
