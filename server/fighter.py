@@ -235,8 +235,8 @@ def add_fighter(
             is_above=False,
             is_left=is_left,
             reference_angle=LIMB_REFERENCE_ANGLES["calf"],
-            reference_min_angle=None,
-            reference_max_angle=None,
+            reference_min_angle=LIMB_MIN_ANGLES["calf"],
+            reference_max_angle=LIMB_MAX_ANGLES["calf"],
             space=space,
         )
 
