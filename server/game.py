@@ -234,8 +234,8 @@ async def play_game(websockets: dict[Player, WebSocketServerProtocol]) -> None:
     space.add_default_collision_handler()
     _add_walls(space)
 
-    state.fighters[Player.RED] = add_fighter(space, RED_GROUP, (100, 100))
-    state.fighters[Player.BLUE] = add_fighter(space, BLUE_GROUP, (WIDTH - 100, 100))
+    state.fighters[Player.RED] = add_fighter(space, RED_GROUP, (200, 200))
+    state.fighters[Player.BLUE] = add_fighter(space, BLUE_GROUP, (WIDTH - 200, 200))
     damage_handler = space.add_collision_handler(
         TAKE_DAMAGE_COLLISION_TYPE, DEAL_DAMAGE_COLLISION_TYPE
     )

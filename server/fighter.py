@@ -120,11 +120,18 @@ def add_limb(
     box.elasticity = ELASTICITY
     box.friction = FRICTION
 
+    reference_anchor = _anchor(size=attach_size, top=is_above, left=is_left)
+    anchor = _anchor(size=size, top=(not is_above), left=is_left)
+
+    # reference_x, reference_y = attach_body.position
+    # body.position = reference_x + reference_anchor[0], reference_y + reference_anchor[1]
+    body.position = attach_body.position
+
     joint = pymunk.PivotJoint(
         attach_body,
         body,
-        _anchor(size=attach_size, top=is_above, left=is_left),
-        _anchor(size=size, top=(not is_above), left=is_left),
+        reference_anchor,
+        anchor,
     )
 
     rest_angle = -reference_angle if is_left else reference_angle
@@ -146,8 +153,10 @@ def add_limb(
 def add_fighter(
     space: pymunk.Space, group: int, start_position: tuple[int, int]
 ) -> Fighter:
+    start_x, start_y = start_position
+
     torso = pymunk.Body(mass=LIMB_MASS, moment=LIMB_MOMENT)
-    torso.position = start_position
+    torso.position = (start_x, start_y)
 
     torso_box = pymunk.Poly.create_box(torso, size=TORSO_SIZE)
     torso_box.group = group
@@ -157,7 +166,6 @@ def add_fighter(
     space.add(torso, torso_box)
 
     head = pymunk.Body(mass=LIMB_MASS, moment=LIMB_MOMENT)
-    head.position = start_position
 
     head_box = pymunk.Poly.create_box(head, size=HEAD_SIZE)
     head_box.group = group
@@ -175,6 +183,8 @@ def add_fighter(
         head_anchor,
         torso_anchor,
     )
+    head.position = (start_x, start_y + torso_anchor[1] - head_anchor[1])
+
     spring = pymunk.DampedRotarySpring(head, torso, 0, JOINT_STIFFNESS, JOINT_DAMPING)
     space.add(joint, spring)
     limbs = {"head": Limb(head, head_box, joint, spring)}
@@ -226,7 +236,6 @@ def add_fighter(
         )
 
     for limb in limbs.values():
-        limb.body.position = start_position
         limb.box.group = group
         limb.box.filter = pymunk.ShapeFilter(group=group)
 
