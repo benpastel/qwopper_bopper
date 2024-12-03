@@ -123,9 +123,9 @@ def add_limb(
     reference_anchor = _anchor(size=attach_size, top=is_above, left=is_left)
     anchor = _anchor(size=size, top=(not is_above), left=is_left)
 
-    # reference_x, reference_y = attach_body.position
-    # body.position = reference_x + reference_anchor[0], reference_y + reference_anchor[1]
-    body.position = attach_body.position
+    x = attach_body.position[0] + reference_anchor[0] - anchor[0]
+    y = attach_body.position[1] + reference_anchor[1] - anchor[1]
+    body.position = (x, y)
 
     joint = pymunk.PivotJoint(
         attach_body,
