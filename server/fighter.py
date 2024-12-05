@@ -137,6 +137,8 @@ def add_limb(
     rest_angle = -reference_angle if is_left else reference_angle
     min_angle = -reference_min_angle if is_left else reference_min_angle
     max_angle = -reference_max_angle if is_left else reference_max_angle
+    if min_angle > max_angle:
+        min_angle, max_angle = max_angle, min_angle
 
     if is_above:
         spring = pymunk.DampedRotarySpring(
