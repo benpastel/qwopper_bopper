@@ -17,12 +17,15 @@ from server.fighter import (
 from server.state import State, Player, other_player
 
 
-WIDTH = 1600
-HEIGHT = 800
+WIDTH = 1700
+HEIGHT = 1200
 FPS = 60
 IMPULSE = 10000
 GRAVITY = 1000
 STEPS_PER_FRAME = 10
+
+RED_START_POSITION = (300, 400)
+BLUE_START_POSITION = (WIDTH - 300, 400)
 
 WALL_GROUP = 1
 RED_GROUP = 2
@@ -250,8 +253,8 @@ async def play_game(websockets: dict[Player, WebSocketServerProtocol]) -> None:
     space.add_default_collision_handler()
     _add_walls(space)
 
-    state.fighters[Player.RED] = add_fighter(space, RED_GROUP, (200, 400))
-    state.fighters[Player.BLUE] = add_fighter(space, BLUE_GROUP, (WIDTH - 200, 400))
+    state.fighters[Player.RED] = add_fighter(space, RED_GROUP, RED_START_POSITION)
+    state.fighters[Player.BLUE] = add_fighter(space, BLUE_GROUP, BLUE_START_POSITION)
     damage_handler = space.add_collision_handler(
         TAKE_DAMAGE_COLLISION_TYPE, DEAL_DAMAGE_COLLISION_TYPE
     )
