@@ -33,7 +33,7 @@ JOINT_DAMPING = 1e3
 #        /
 # ======* - - - -
 LIMB_REFERENCE_ANGLES = {"thigh": pi / 4, "calf": -pi / 8, "arm": pi * 3 / 4}
-LIMB_MIN_ANGLES = {"thigh": 0, "calf": -pi, "arm": 0}
+LIMB_MIN_ANGLES = {"thigh": -pi / 2, "calf": -pi, "arm": 0}
 LIMB_MAX_ANGLES = {"thigh": pi / 2, "calf": 0, "arm": pi * 5 / 4}
 
 
