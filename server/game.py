@@ -189,6 +189,9 @@ def _detach_limb(fighter: Fighter, space: pymunk.Space) -> None:
     space.remove(target.joint, target.spring)
     target.joint = None
     target.spring = None
+    if target.rotary_limit:
+        space.remove(target.rotary_limit)
+        target.rotary_limit = None
 
 
 def deal_damage_callback(state: State) -> Callable:

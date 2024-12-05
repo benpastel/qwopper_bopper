@@ -72,6 +72,7 @@ class Limb:
     # None if the joint & spring have been removed because the limb fell off
     joint: pymunk.PivotJoint | None
     spring: pymunk.DampedRotarySpring | None
+    rotary_limit: pymunk.RotaryLimitJoint | None
 
 
 class Fighter(NamedTuple):
@@ -143,6 +144,7 @@ def add_limb(
         )
         # rotary_limit = pymunk.RotaryLimitJoint(body, attach_body, min_angle, max_angle)
         # TODO: arms case limits aren't working yet
+        rotary_limit = None
     else:
         spring = pymunk.DampedRotarySpring(
             attach_body, body, rest_angle, JOINT_STIFFNESS, JOINT_DAMPING
@@ -151,7 +153,7 @@ def add_limb(
         space.add(rotary_limit)
     space.add(body, box, joint, spring)
 
-    return Limb(body, box, joint, spring)
+    return Limb(body, box, joint, spring, rotary_limit)
 
 
 def add_fighter(
@@ -191,7 +193,7 @@ def add_fighter(
 
     spring = pymunk.DampedRotarySpring(head, torso, 0, JOINT_STIFFNESS, JOINT_DAMPING)
     space.add(joint, spring)
-    limbs = {"head": Limb(head, head_box, joint, spring)}
+    limbs = {"head": Limb(head, head_box, joint, spring, rotary_limit=None)}
 
     # add left & right of all limbs
     for is_left in [False, True]:
