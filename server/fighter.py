@@ -20,7 +20,9 @@ DEAL_DAMAGE_COLLISION_TYPE = 2
 ELASTICITY = 0.05
 FRICTION = 0.9
 
+TORSO_MASS = 20
 LIMB_MASS = 20
+TORSO_MOMENT = TORSO_MASS**4
 LIMB_MOMENT = LIMB_MASS**4
 
 JOINT_STIFFNESS = 1e7
@@ -163,7 +165,7 @@ def add_fighter(
 ) -> Fighter:
     start_x, start_y = start_position
 
-    torso = pymunk.Body(mass=LIMB_MASS, moment=LIMB_MOMENT)
+    torso = pymunk.Body(mass=TORSO_MASS, moment=TORSO_MOMENT)
     torso.position = (start_x, start_y)
 
     torso_box = pymunk.Poly.create_box(torso, size=TORSO_SIZE)
