@@ -69,10 +69,10 @@ def _apply_keypress(player: Player, state: State) -> None:
     # in local coordinate to the limb:
     # negative x impulse causes counterclockwise rotation
     # positive x impulse causes clockwise rotation
-    if keydown == "q":
+    if keydown == "w":
         # open thighs
         neg, pos = "lthigh", "rthigh"
-    elif keydown == "w":
+    elif keydown == "q":
         # close thighs
         neg, pos = "rthigh", "lthigh"
     elif keydown == "o":
@@ -81,11 +81,11 @@ def _apply_keypress(player: Player, state: State) -> None:
     elif keydown == "p":
         # close calves
         neg, pos = "rcalf", "lcalf"
-    elif keydown == "e":
-        # open arms
-        neg, pos = "rarm", "larm"
     elif keydown == "r":
-        # close arms
+        # open (raise) arms
+        neg, pos = "rarm", "larm"
+    elif keydown == "e":
+        # close (lower) arms
         neg, pos = "larm", "rarm"
     else:
         return
