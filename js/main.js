@@ -1,6 +1,7 @@
 
 const BLUE_PLAYER = "blue";
 const RED_PLAYER = "red";
+const SOLO_PLAYER = "solo";
 const PLAYERS = [BLUE_PLAYER, RED_PLAYER];
 const PARTS = [
     "torso",
@@ -22,8 +23,8 @@ function joinGame(websocket) {
     // based on hardcoded url ?player=blue or ?player=red
     const params = new URLSearchParams(window.location.search);
     const player = params.get("player");
-    if (! (player === BLUE_PLAYER || player === RED_PLAYER)) {
-      const msg = `⚠️⚠️⚠️<br>Set your url to ?player=${BLUE_PLAYER} or ?player=${RED_PLAYER}<br>⚠️⚠️⚠️`;
+    if (! (player === BLUE_PLAYER || player === RED_PLAYER || player === SOLO_PLAYER)) {
+      const msg = `⚠️⚠️⚠️<br>Set your url to ?player=${BLUE_PLAYER} or ?player=${RED_PLAYER} or ?player=${SOLO_PLAYER}<br>⚠️⚠️⚠️`;
       alert(msg);
       console.log(params);
       throw new Error(msg);

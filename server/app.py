@@ -16,12 +16,6 @@ WEBSOCKETS: dict[Player, WebSocketServerProtocol] = {}
 
 IS_AI: dict[Player, bool] = {}
 
-# websocket event to start a game against another human player
-JOIN_PVP_EVENT = "join_pvp"
-
-# websocket event to start a game against the AI
-JOIN_AI_EVENT = "join_ai"
-
 
 async def handler(websocket: WebSocketServerProtocol) -> None:
     """
@@ -40,20 +34,35 @@ async def handler(websocket: WebSocketServerProtocol) -> None:
     while True:
         message = await websocket.recv()
         event = json.loads(message)
-        if "type" in event and event["type"] in ["join_pvp", "join_ai"]:
+        if "type" in event and event["type"] == 'join':
             break
         else:
             print(f"unexpected {event=}")
 
     # either way, register the client's websocket
-    player = Player(event["player"])
     WEBSOCKETS[player] = websocket
+
+    if event["player"] == SOLO_PLAYER:
+        # in solo mode, the player is red and the AI is blue
+        player = Player.RED
+        vs_ai = True
+    else:
+        # in pvp, the player is the one specified in the url
+        player = Player(event["player"])
+        vs_ai = False
+
     IS_AI[player] = False
-    print(f"{player} connected")
+    IS_AI[other_player(player)] = vs_ai
+    print(f"{player} connected {vs_ai=}")
 
     try:
-        # in pvp, wait for the other player to join
-        if event["type"] == JOIN_PVP_EVENT:
+        if vs_ai:
+            # play the game against the AI
+            IS_AI[other_player(player)] = True
+            await play_game(WEBSOCKETS, IS_AI)
+        else:
+            # in pvp, check if we are the 2nd player to join.
+            # 1st player waits forever; 2nd player starts the game.
             if len(WEBSOCKETS) == 2 and all(w.open for w in WEBSOCKETS.values()):
                 assert len(IS_AI) == 2 and all(not ai for ai in IS_AI.values())
                 # both players are connected, so start the match.
@@ -62,21 +71,18 @@ async def handler(websocket: WebSocketServerProtocol) -> None:
             else:
                 # wait forever for the other player to connect
                 await websocket.wait_closed()
-        else:
-            # vs ai, just wait for the game to finish
-            IS_AI[other_player(player)] = True
-            await play_game(WEBSOCKETS, IS_AI)
     finally:
-        # whichever handler gets here closes both connections
+        # close all connections and wipe the registry
         # both players will need to refresh to play a new game
         for websocket in WEBSOCKETS.values():
             print("Disconnecting.")
             await websocket.close()
 
+        WEBSOCKETS.clear()
+        IS_AI.clear()
+
     # trigger garbage collection between games
     # so there's less likely to be a big collection during the game
-    WEBSOCKETS.clear()
-    IS_AI.clear()
     gc.collect()
 
 
