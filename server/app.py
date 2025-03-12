@@ -16,6 +16,9 @@ WEBSOCKETS: dict[Player, WebSocketServerProtocol] = {}
 
 IS_AI: dict[Player, bool] = {}
 
+# url param for solo mode vs an AI
+SOLO_PLAYER = "solo"
+
 
 async def handler(websocket: WebSocketServerProtocol) -> None:
     """
@@ -34,13 +37,10 @@ async def handler(websocket: WebSocketServerProtocol) -> None:
     while True:
         message = await websocket.recv()
         event = json.loads(message)
-        if "type" in event and event["type"] == 'join':
+        if "type" in event and event["type"] == "join":
             break
         else:
             print(f"unexpected {event=}")
-
-    # either way, register the client's websocket
-    WEBSOCKETS[player] = websocket
 
     if event["player"] == SOLO_PLAYER:
         # in solo mode, the player is red and the AI is blue
@@ -53,12 +53,14 @@ async def handler(websocket: WebSocketServerProtocol) -> None:
 
     IS_AI[player] = False
     IS_AI[other_player(player)] = vs_ai
-    print(f"{player} connected {vs_ai=}")
+
+    # either way, register the client's websocket
+    WEBSOCKETS[player] = websocket
 
     try:
         if vs_ai:
             # play the game against the AI
-            IS_AI[other_player(player)] = True
+            print("New solo match.")
             await play_game(WEBSOCKETS, IS_AI)
         else:
             # in pvp, check if we are the 2nd player to join.
@@ -66,7 +68,7 @@ async def handler(websocket: WebSocketServerProtocol) -> None:
             if len(WEBSOCKETS) == 2 and all(w.open for w in WEBSOCKETS.values()):
                 assert len(IS_AI) == 2 and all(not ai for ai in IS_AI.values())
                 # both players are connected, so start the match.
-                print("New match.")
+                print("New PVP match.")
                 await play_game(WEBSOCKETS, IS_AI)
             else:
                 # wait forever for the other player to connect
