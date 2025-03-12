@@ -40,7 +40,7 @@ function joinGame(websocket) {
 function getWebSocketServer() {
   if (window.location.host === "localhost:8000") {
     return "ws://localhost:8001/";
-  } else if (window.location.host === "benpastel.github.io") {
+  } else if (window.location.host === "benpastel.github.io" || window.location.host === "benpastel.com") {
     // github pages => heroku
     return "wss://qwopper-bopper-1f56b650128c.herokuapp.com";
   } else {
