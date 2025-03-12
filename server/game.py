@@ -49,11 +49,9 @@ async def _listen_for_keydown(
         if "keydown" in event:
             state.keydowns_this_frame[player] = event["keydown"]
 
-
-def _apply_keypress(player: Player, state: State) -> None:
+def _read_keydown(player: Player, state: State) -> str | None:
     """
-    Read the last keydown & reset it to None
-    Adjust the motor rates based on the keydown
+    Read the last keydown & reset it to None.  Normalize to lowercase.
     """
     fighter = state.fighters[player]
     keydown = state.keydowns_this_frame[player]
@@ -61,6 +59,38 @@ def _apply_keypress(player: Player, state: State) -> None:
 
     if keydown:
         keydown = keydown.lower()
+
+    return keydown
+
+
+def _choose_ai_move(player: Player, state: State) -> str:
+    """
+    Choose a random move for AI players
+
+    TODO: sometimes continue the previous move to make it less jittery
+    """
+    return random.choice(["w", "q", "o", "p","e", "r"])
+
+
+def _apply_move(player: Player, state: State) -> None:
+    """
+    For human players, read the last keydown & reset it to None
+    For AI players, make a random move
+    Adjust the motor rates based on the selected move
+    """
+    fighter = state.fighters[player]
+    keydown = state.keydowns_this_frame[player]
+    state.keydowns_this_frame[player] = None  # reset the keydown
+
+    if keydown:
+        keydown = keydown.lower()
+
+    if state.is_ai[player]:
+        # AI players make random moves
+        keydown = _choose_ai_move(player, state)
+    else:
+        # human players read the last keydown
+        keydown = _read_keydown(player, state)
 
     # QW: open / close thighs
     # OP: open / close calves
@@ -237,13 +267,12 @@ def deal_damage_callback(state: State) -> Callable:
     return deal_damage
 
 
-async def play_game(websockets: dict[Player, WebSocketServerProtocol]) -> None:
-    state = State()
+async def play_game(websockets: dict[Player, WebSocketServerProtocol], is_ai: dict[Player, bool]) -> None:
+    state = State(is_ai)
 
-    # listen for keypresses in background tasks
+    # for all humans, listen for keypresses in background tasks
     # keep a reference until state is garbage-collected
-    for player in Player:
-        websocket = websockets[player]
+    for player, websocket in websockets.items():
         task = asyncio.create_task(_listen_for_keydown(player, state, websocket))
         task.add_done_callback(_keydown_exception_handler)
         state.keydown_listeners[player] = task
@@ -267,9 +296,9 @@ async def play_game(websockets: dict[Player, WebSocketServerProtocol]) -> None:
         await asyncio.sleep(next_frame - time())
         last_frame = next_frame
 
-        # update each player's fighters based on their keypressed
+        # update each player's fighters based on their keypress or AI
         for player in Player:
-            _apply_keypress(player, state)
+            _apply_move(player, state)
 
         # advance physics
         for _ in range(STEPS_PER_FRAME):

@@ -15,6 +15,7 @@ def other_player(p: Player) -> Player:
 
 class State:
     fighters: dict[Player, Fighter]
+    is_ai: dict[Player, bool]
 
     scores: dict[Player, int]
 
@@ -31,8 +32,9 @@ class State:
     # garbage collected until the game is over
     keydown_listeners: dict[Player, asyncio.Task]
 
-    def __init__(self):
+    def __init__(self, is_ai: dict[Player, bool]):
         self.fighters = {}
+        self.is_ai = is_ai
         self.scores = {player: 0 for player in Player}
         self.hits_this_frame = {player: set() for player in Player}
         self.keydowns_this_frame = {player: None for player in Player}
