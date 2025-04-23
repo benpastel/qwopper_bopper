@@ -1,9 +1,10 @@
 # qwopper_bopper
 A 2-player fighting game with unnecessarily difficult controls, under construction.
 
+<img width="1137" alt="Screenshot 2025-04-23 at 3 33 04 PM" src="https://github.com/user-attachments/assets/4952f8bb-7e01-417c-aee5-36ce8d988483" />
+
 I wouldn't call it _fun_ yet, but it is funny for a few minutes :)
 
-<img width="1486" alt="Screenshot 2025-04-23 at 3 24 15 PM" src="https://github.com/user-attachments/assets/201c97a9-1ce4-43a0-a556-f680e9a4b103" />
 
 ## Controls
 - Q: open thighs
