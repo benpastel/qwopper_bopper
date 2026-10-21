@@ -1,0 +1,17 @@
+:root {
+  --bg: #ece6da;
+  --ink: #2b2620;
+}
+html,
+body {
+  margin: 0;
+  height: 100%;
+  background: var(--bg);
+  color: var(--ink);
+  overflow: hidden;
+}
+#arena {
+  display: block;
+  width: 100vw;
+  height: 100vh;
+}
