@@ -2,7 +2,7 @@
 // happens to them. Everything is drawn from the game state alone, so a
 // rollback that rewrites the past redraws correctly on the next frame.
 
-import { PARTS, type PartIndex, type Vec } from '../sim/body';
+import { LENGTH, PARTS, type PartIndex, type Vec } from '../sim/body';
 import type { Game, Side } from '../sim/game';
 import { held, type Input, type Key } from '../sim/input';
 import { ARENA_HEIGHT as H, ARENA_WIDTH as W } from '../sim/tuning';
@@ -167,7 +167,7 @@ export class Renderer {
     if (sprite) {
       const [l, bt, r, t] = sprite.place;
       ctx.save();
-      ctx.scale(1, -1);
+      ctx.scale(1, -LENGTH[def.kind]);
       ctx.drawImage(sprite.image, l, -t, r - l, t - bt);
       const flash = flashOn(game.state, side, i);
       if (flash > 0) {
@@ -196,8 +196,9 @@ export class Renderer {
       if (spot) {
         const sign = left ? -1 : 1;
         const lit = side === view.you && attached;
-        letter(ctx, def.keys.open, sign * spot.dx, spot.y, spot.size, lit && held(view.held, def.keys.open), side);
-        letter(ctx, def.keys.close, -sign * spot.dx, spot.y, spot.size, lit && held(view.held, def.keys.close), side);
+        const y = spot.y * LENGTH[def.kind];
+        letter(ctx, def.keys.open, sign * spot.dx, y, spot.size, lit && held(view.held, def.keys.open), side);
+        letter(ctx, def.keys.close, -sign * spot.dx, y, spot.size, lit && held(view.held, def.keys.close), side);
       }
     }
 

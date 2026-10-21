@@ -21,8 +21,8 @@ export const RESTITUTION = 0.05;
 // A held key drives its joint toward open or close with a stiff spring; with
 // neither held the joint relaxes to a weak spring toward its rest angle.
 // (Rapier's acceleration-based motor: stiffness and damping are per unit inertia.)
-export const DRIVE_STIFFNESS = 260;
-export const DRIVE_DAMPING = 22;
+export const DRIVE_STIFFNESS = 800;
+export const DRIVE_DAMPING = 40;
 export const REST_STIFFNESS = 120;
 export const REST_DAMPING = 8;
 export const NECK_STIFFNESS = 120;
@@ -30,7 +30,7 @@ export const NECK_DAMPING = 10;
 
 // A gentle torque keeping the torso upright, so a fighter can be knocked down but
 // isn't helpless on every stumble. Torque per radian of lean, and its damping.
-export const UPRIGHT_STIFFNESS = 30;
+export const UPRIGHT_STIFFNESS = 60;
 export const UPRIGHT_DAMPING = 6;
 
 // ------------------------------------------------------------------ damage

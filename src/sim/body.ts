@@ -205,6 +205,32 @@ function mirror(def: PartDef, name: PartName, parent: PartName | null): PartDef 
   };
 }
 
+// How much longer each kind of part is than its shape above, along its length.
+// The art stretches to match.
+export const LENGTH: Readonly<Record<Kind, number>> = {
+  torso: 1,
+  head: 1,
+  arm: 1.5,
+  thigh: 1.25,
+  calf: 1.2,
+};
+
+function stretch(def: PartDef, parentKind: Kind): PartDef {
+  const k = LENGTH[def.kind];
+  const long = ([x, y]: Vec, by: number): Vec => [x, y * by];
+  const j = def.joint;
+  return {
+    ...def,
+    size: long(def.size, k),
+    hull: def.hull.map((p) => long(p, k)),
+    joint: j && {
+      ...j,
+      onParent: long(j.onParent, LENGTH[parentKind]),
+      onChild: long(j.onChild, k),
+    },
+  };
+}
+
 // in PART_NAMES order, parents before children
 export const PARTS: readonly PartDef[] = [
   TORSO,
@@ -215,7 +241,10 @@ export const PARTS: readonly PartDef[] = [
   R_THIGH,
   mirror(R_CALF, 'lCalf', 'lThigh'),
   R_CALF,
-];
+].map((def, _, all) => {
+  const parent = all.find((p) => p.name === def.joint?.parent);
+  return stretch(def, parent?.kind ?? 'torso');
+});
 
 export function partIndex(name: PartName): PartIndex {
   return PART_NAMES.indexOf(name);
