@@ -17,6 +17,7 @@
 //
 // Everything is in memory, so a server restart ends every table.
 
+import { randomUUID } from 'node:crypto';
 import {
   cleanName,
   ID_ALPHABET,
@@ -76,7 +77,7 @@ export class Lobby {
   hello(userId: string | null, name: string, bind: (userId: string) => void): string {
     let user = userId === null ? undefined : this.users.get(userId);
     if (user === undefined) {
-      user = { id: this.newId(16), name: cleanName(name), connected: true, lastSeen: 0, tableId: null };
+      user = { id: randomUUID(), name: cleanName(name), connected: true, lastSeen: 0, tableId: null };
       this.users.set(user.id, user);
     } else if (cleanName(name)) {
       user.name = cleanName(name);
