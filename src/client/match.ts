@@ -34,6 +34,7 @@ const TICK_MS = 1000 / FPS;
 // after a stall (a hidden tab, a slow frame), catch up at most this many ticks at once
 const MAX_CATCH_UP = 240;
 const SILENCE_MS = 5000;
+const HIDDEN_TICK_MS = 250;
 
 export function runMatch(opts: MatchOptions): MatchHandle {
   const keyboard = new Keyboard();
@@ -47,8 +48,8 @@ export function runMatch(opts: MatchOptions): MatchHandle {
   let owed = 0;
   let over = false;
 
-  const frame = (now: number) => {
-    if (!running) return;
+  // run the ticks owed since last time; false once the match has ended this way
+  const advance = (now: number): boolean => {
     owed += now - last;
     last = now;
     let ticks = 0;
@@ -62,7 +63,6 @@ export function runMatch(opts: MatchOptions): MatchHandle {
     }
     if (ticks === MAX_CATCH_UP) owed = 0;
 
-    renderer.draw(game, { you: opts.you, held: keyboard.input, names: opts.names });
     if (!over && game.state.phase === 'over') {
       over = true;
       opts.onOver?.(game.winner()!);
@@ -70,15 +70,28 @@ export function runMatch(opts: MatchOptions): MatchHandle {
     if (tick.silent()) {
       running = false;
       opts.onDisconnect?.();
-      return;
+      return false;
     }
+    return true;
+  };
+
+  const frame = (now: number) => {
+    if (!running || !advance(now)) return;
+    renderer.draw(game, { you: opts.you, held: keyboard.input, names: opts.names });
     requestAnimationFrame(frame);
   };
   requestAnimationFrame(frame);
 
+  // A hidden tab gets no animation frames, but the other side is still playing:
+  // keep the game (and the packets) going on a timer, which browsers slow but don't stop.
+  const background = setInterval(() => {
+    if (running && document.hidden) advance(performance.now());
+  }, HIDDEN_TICK_MS);
+
   return {
     stop() {
       running = false;
+      clearInterval(background);
       keyboard.dispose();
       renderer.dispose();
       tick.dispose();

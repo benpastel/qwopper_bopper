@@ -16,5 +16,12 @@ I wouldn't call it _fun_ yet, but it is funny for a few minutes :)
 
 ## Implementation
 
-Python `pymunk` as the physics engine, communicating with a simple JS canvas animation loop over websockets.
+TypeScript throughout. The game is a deterministic [Rapier](https://rapier.rs) simulation (`src/sim`) that both players run in their browsers, connected peer to peer with rollback netcode (`src/net`); a small Node server (`src/server`) hosts the lobby and introduces the peers.
 
+```
+npm install
+npm run dev     # server on :8080, client on :5173
+npm test
+```
+
+`?fakenet=latency,jitter,loss` plays the bot over a simulated network, e.g. `?fakenet=90,30,0.1`.

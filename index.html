@@ -4,10 +4,51 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Qwopper Bopper</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600&family=Cormorant+Garamond:wght@400;500&display=swap"
+    />
     <link rel="stylesheet" href="/src/client/style.css" />
   </head>
-  <body>
+  <body class="at-lobby">
     <canvas id="arena"></canvas>
+
+    <main class="screen lobby">
+      <h1 class="title">Qwopper Bopper</h1>
+      <input class="name-input" maxlength="20" spellcheck="false" autocomplete="off" placeholder="your name" aria-label="Your name" />
+      <div class="actions">
+        <button class="btn primary new-table" disabled>new table</button>
+        <button class="btn play-bot" disabled>play bot</button>
+      </div>
+      <ul class="table-list"></ul>
+    </main>
+
+    <main class="screen room">
+      <div class="pairing">
+        <span class="player host"></span>
+        <span class="vs">vs</span>
+        <span class="player guest empty"></span>
+      </div>
+      <div class="invite">
+        <input class="invite-link" readonly aria-label="Invite link" />
+        <button class="btn small copy">copy</button>
+      </div>
+      <button class="btn leave">leave</button>
+    </main>
+
+    <div class="result" hidden>
+      <h2 class="result-title"></h2>
+      <p class="result-note" hidden></p>
+      <div class="actions">
+        <button class="btn primary again">again</button>
+        <button class="btn leave">leave</button>
+      </div>
+    </div>
+
+    <div class="netbar" hidden></div>
+    <div class="toast" hidden></div>
     <script type="module" src="/src/client/main.ts"></script>
   </body>
 </html>
